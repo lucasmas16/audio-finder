@@ -32,7 +32,7 @@ Checklist para a primeira publicação e para cada release. A separação físic
 
 ## Limitações conhecidas
 
-- **Sem assinatura de código**: o SmartScreen mostra "Editor desconhecido". O build e a pipeline já aceitam SignPath (na pipeline) ou assinatura local com Certum; veja [assinatura de código](ASSINATURA.md). A atestação de origem e os hashes permitem conferir os arquivos.
+- **Sem assinatura de código**: o SmartScreen mostra "Editor desconhecido". O build e a pipeline já aceitam SignPath (na pipeline; o pedido gratuito foi recusado por falta de visibilidade e pode ser refeito depois) ou assinatura local com Certum; veja [assinatura de código](ASSINATURA.md). A atestação de origem e os hashes permitem conferir os arquivos.
 - **Ícones**: são ilustrações genéricas sem logotipos, mas alguns lembram produtos reais, e os nomes internos dos arquivos (por exemplo `airpods.png`) ficaram iguais para não quebrar configurações salvas. Se quiser eliminar esse risco residual, troque por desenhos mais genéricos e renomeie as chaves com migração em `Settings.Normalize`.
 - **Testes de interface**: a suíte completa (`build.ps1 -RunTests`) precisa de dispositivos de áudio reais e de sessão interativa, por isso roda só localmente. A pipeline roda os testes determinísticos e o teste do instalador.
 - **Histórico**: comece o repositório sem o histórico anterior; o material antigo fica em `privado/`.

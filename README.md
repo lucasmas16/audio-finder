@@ -86,12 +86,12 @@ A conexão usa a propriedade pública [KSPROPERTY_ONESHOT_RECONNECT](https://lea
 
 ## Code signing policy
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org). *(Pedido em análise; até a aprovação, as releases saem sem assinatura.)*
+As releases ainda **não têm assinatura de código**. Até lá, confira a origem pela atestação da pipeline (`gh attestation verify`) e pelo `SHA256SUMS.txt` de cada release, como descrito em [Instalar](#instalar).
 
 - Committers and reviewers: [@lucasmas16](https://github.com/lucasmas16)
 - Approvers: [@lucasmas16](https://github.com/lucasmas16)
 
-Somente binários gerados pela pipeline [release](.github/workflows/release.yml) a partir deste repositório são assinados, e cada assinatura exige aprovação manual. Detalhes em [assinatura de código](docs/ASSINATURA.md).
+Quando a assinatura for ativada, só serão assinados binários gerados a partir deste repositório, e cada assinatura exigirá aprovação manual do mantenedor. Detalhes em [assinatura de código](docs/ASSINATURA.md).
 
 Privacy policy: this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
 

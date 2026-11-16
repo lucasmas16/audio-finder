@@ -20,6 +20,8 @@ Uma assinatura nova não remove o aviso do SmartScreen na hora. A reputação se
 
 Requisitos do programa: licença aprovada pela OSI (MIT), código público, binários gerados pela pipeline, autenticação em dois fatores e aprovação manual de cada assinatura. A aprovação não é garantida, e o editor exibido é "SignPath Foundation".
 
+**Situação:** o primeiro pedido foi recusado em 2026-11-16 por falta de sinais públicos de adoção (estrelas, forks, contribuidores, artigos ou discussões externas). Dá para pedir de novo quando o projeto tiver mais visibilidade. Só publique a frase de atribuição abaixo depois de aprovado.
+
 1. Peça em [signpath.org](https://signpath.org/), informando este repositório.
 2. Depois de aprovado, configure no SignPath o projeto, a política de assinatura e duas configurações de artefato:
    - `app`:
@@ -32,7 +34,7 @@ Requisitos do programa: licença aprovada pela OSI (MIT), código público, bin�
      ```
    - `setup`: igual, com `path="AudioFinder-Setup-*.exe"`. Ajuste conforme o editor do SignPath validar.
 3. No GitHub, cadastre o secret `SIGNPATH_API_TOKEN` e as variáveis `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG` e `SIGNING_MODE=signpath`.
-4. Publique a política exigida pelo programa no README:
+4. Acrescente à seção "Code signing policy" do README (e cite-a nas notas de cada release) a atribuição exigida pelo programa:
 
    > Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 
