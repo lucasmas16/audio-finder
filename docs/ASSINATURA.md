@@ -3,7 +3,7 @@
 Os pacotes saem sem assinatura enquanto nenhum provedor estiver configurado. O build e a pipeline já têm os pontos de assinatura. A ordem importa:
 
 1. `AudioFinder.exe` é assinado **antes** de entrar no instalador e no ZIP portátil.
-2. `AudioFinder-Setup-<versão>.exe` é assinado depois de compilado.
+2. `AudioFinder-Setup.exe` é assinado depois de compilado.
 3. `SHA256SUMS.txt` e a atestação de origem são gerados **depois** da assinatura, porque assinar muda o hash.
 
 O modo é escolhido pela variável de repositório `SIGNING_MODE` em **Settings › Secrets and variables › Actions › Variables**:
@@ -32,7 +32,7 @@ Requisitos do programa: licença aprovada pela OSI (MIT), código público, bin�
        </zip-file>
      </artifact-configuration>
      ```
-   - `setup`: igual, com `path="AudioFinder-Setup-*.exe"`. Ajuste conforme o editor do SignPath validar.
+   - `setup`: igual, com `path="AudioFinder-Setup.exe"`. Ajuste conforme o editor do SignPath validar.
 3. No GitHub, cadastre o secret `SIGNPATH_API_TOKEN` e as variáveis `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG` e `SIGNING_MODE=signpath`.
 4. Acrescente à seção "Code signing policy" do README (e cite-a nas notas de cada release) a atribuição exigida pelo programa:
 
@@ -69,7 +69,7 @@ Hoje, para pessoa física, só está disponível nos EUA e no Canadá. Se ficar 
 ## Conferir uma assinatura
 
 ```powershell
-Get-AuthenticodeSignature .\AudioFinder-Setup-1.0.1.exe | Format-List Status, SignerCertificate, TimeStamperCertificate
+Get-AuthenticodeSignature .\AudioFinder-Setup.exe | Format-List Status, SignerCertificate, TimeStamperCertificate
 ```
 
 ## Segurança

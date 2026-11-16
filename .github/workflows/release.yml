@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: setup-unsigned
-          path: release/AudioFinder-Setup-*.exe
+          path: release/AudioFinder-Setup.exe
           if-no-files-found: error
           retention-days: 1
 
@@ -113,7 +113,7 @@ jobs:
         if: env.SIGNING_MODE == 'signpath'
         shell: pwsh
         run: |
-          Copy-Item signed/setup/AudioFinder-Setup-$env:VERSION.exe release/ -Force
+          Copy-Item signed/setup/AudioFinder-Setup.exe release/ -Force
           ./build.ps1 -ChecksumsOnly -RequireSigned -Version $env:VERSION
       # --- end SignPath ---
 
@@ -133,8 +133,8 @@ jobs:
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            release/AudioFinder-Setup-*.exe
-            release/AudioFinder-*-win-x64.zip
+            release/AudioFinder-Setup.exe
+            release/AudioFinder-Portable.zip
 
       # Draft only: the maintainer reviews notes and files before publishing.
       - name: Criar release em rascunho

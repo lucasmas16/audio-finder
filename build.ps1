@@ -14,7 +14,7 @@ $outDir = Join-Path $PSScriptRoot 'dist'
 $objDir = Join-Path $PSScriptRoot 'obj'
 $releaseDir = Join-Path $PSScriptRoot 'release'
 $appPath = Join-Path $outDir 'AudioFinder.exe'
-$setupPath = Join-Path $releaseDir "AudioFinder-Setup-$Version.exe"
+$setupPath = Join-Path $releaseDir "AudioFinder-Setup.exe"
 $icon = Join-Path $PSScriptRoot 'AudioFinder.ico'
 New-Item -ItemType Directory -Force -Path $outDir, $objDir | Out-Null
 if ($SignScript) { $SignScript = (Resolve-Path -LiteralPath $SignScript).Path }
@@ -107,7 +107,7 @@ if ($Release) {
     # Without a sign hook the installer is signed by an external step, then checked by -ChecksumsOnly -RequireSigned.
     if ($RequireSigned -and $SignScript) { Assert-Signed $setupPath }
 
-    $portable = Join-Path $releaseDir "AudioFinder-$Version-win-x64.zip"
+    $portable = Join-Path $releaseDir "AudioFinder-Portable.zip"
     [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $portable, [System.IO.Compression.CompressionLevel]::Optimal, $false)
     Write-Checksums
     Write-Output "Release $Version em $releaseDir"

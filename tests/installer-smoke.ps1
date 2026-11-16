@@ -4,7 +4,7 @@ param([switch]$Integration)
 $ErrorActionPreference = 'Stop'
 $project = Split-Path $PSScriptRoot -Parent
 $version = (Get-Content -LiteralPath (Join-Path $project 'VERSION') -Raw).Trim()
-$setup = Join-Path $project "release\AudioFinder-Setup-$version.exe"
+$setup = Join-Path $project "release\AudioFinder-Setup.exe"
 if (-not (Test-Path $setup)) { throw 'Gere o pacote antes: build.ps1 -Release' }
 $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AudioFinder'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Audio Finder.lnk'

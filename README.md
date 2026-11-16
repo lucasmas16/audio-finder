@@ -2,7 +2,27 @@
 
 Aplicativo de bandeja para Windows que alterna a saída de áudio padrão por atalhos globais, com até oito posições e histórico de dispositivos Bluetooth.
 
-Projeto pessoal em desenvolvimento. Esta pasta contém o código destinado a um repositório independente.
+## Download
+
+[![Baixar o instalador para Windows](https://img.shields.io/badge/Baixar_instalador-Windows_10%2F11_64--bit-2ea44f?style=for-the-badge)](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Setup.exe)
+&nbsp;
+[![Baixar a versão portátil](https://img.shields.io/badge/Vers%C3%A3o_port%C3%A1til-.zip-555555?style=for-the-badge)](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Portable.zip)
+
+[![Última versão](https://img.shields.io/github/v/release/lucasmas16/audio-finder?label=%C3%BAltima%20vers%C3%A3o)](https://github.com/lucasmas16/audio-finder/releases/latest)
+
+Os botões sempre baixam a versão mais recente.
+
+1. Clique em **Baixar instalador** e abra o `AudioFinder-Setup.exe`.
+2. Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais informações › Executar assim mesmo**. O aviso aparece porque o instalador ainda não tem assinatura digital ([como conferir a origem](#instalar)).
+3. Clique em **Instalar**. Não precisa de administrador. O Audio Finder abre no ícone perto do relógio e fica no Menu Iniciar.
+
+| Arquivo | Para quem |
+| --- | --- |
+| [`AudioFinder-Setup.exe`](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Setup.exe) | A maioria das pessoas: instala, cria o atalho e permite desinstalar em **Configurações › Aplicativos** |
+| [`AudioFinder-Portable.zip`](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Portable.zip) | Quem prefere não instalar: extraia e rode o `AudioFinder.exe` |
+| [`SHA256SUMS.txt`](https://github.com/lucasmas16/audio-finder/releases/latest/download/SHA256SUMS.txt) | Conferir a integridade dos arquivos |
+
+Requer Windows 10 (1903 ou mais recente) ou Windows 11, 64 bits. Versões anteriores e notas de cada versão ficam em [Releases](https://github.com/lucasmas16/audio-finder/releases).
 
 ## Funcionalidades
 
@@ -19,13 +39,13 @@ C#, Windows Forms, .NET Framework 4.8 e APIs nativas do Windows.
 
 ## Instalar
 
-Baixe `AudioFinder-Setup-<versão>.exe` na página de Releases e execute. A instalação é só para o usuário atual, em `%LOCALAPPDATA%\Programs\AudioFinder`, sem pedir administrador, com atalho no Menu Iniciar e desinstalação em **Configurações › Aplicativos**. Atualizar mantém configurações e atalhos. Também há um `.zip` portátil.
+Use os botões de [Download](#download). A instalação é só para o usuário atual, em `%LOCALAPPDATA%\Programs\AudioFinder`, sem pedir administrador, com atalho no Menu Iniciar e desinstalação em **Configurações › Aplicativos**. Atualizar mantém configurações e atalhos. Também há um `.zip` portátil.
 
 Os executáveis ainda não têm assinatura digital, então o Windows SmartScreen pode avisar "Editor desconhecido". O build já está preparado para assinar ([assinatura de código](docs/ASSINATURA.md)). Para conferir que o arquivo veio da pipeline deste repositório:
 
 ```powershell
-gh attestation verify .\AudioFinder-Setup-1.0.0.exe --repo lucasmas16/audio-finder
-Get-FileHash .\AudioFinder-Setup-1.0.0.exe -Algorithm SHA256   # compare com SHA256SUMS.txt
+gh attestation verify .\AudioFinder-Setup.exe --repo lucasmas16/audio-finder
+Get-FileHash .\AudioFinder-Setup.exe -Algorithm SHA256   # compare com SHA256SUMS.txt
 ```
 
 Opções do instalador: `/silent`, `/desktop`, `/nolaunch`, `/dir=<pasta>`. Desinstalação silenciosa: `Uninstall.exe /uninstall /silent` (acrescente `/removedata` para apagar também `%LOCALAPPDATA%\AudioFinder`). Erros no modo silencioso vão para `%TEMP%\AudioFinderSetup.log`.
