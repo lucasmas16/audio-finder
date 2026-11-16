@@ -20,7 +20,8 @@ Checklist para a primeira publicação e para cada release. A separação físic
    - **Security**: ativar *Private vulnerability reporting*, *Dependabot alerts*, *Dependabot security updates*, *Secret scanning* e *Push protection*.
    - **Actions › General**: *Workflow permissions* = "Read repository contents"; exigir aprovação de workflows de colaboradores externos (*first-time contributors*).
    - **Rules**: ruleset para `main`, exigindo pull request e o check `CI / build`, e bloqueando force push; ruleset de tags `v*` permitindo criação só pelo mantenedor, porque uma tag dispara a release.
-3. Substitua `<dono>/<repositório>` no README pelo caminho real.
+3. Confira se o comando `gh attestation verify` do README aponta para o repositório real.
+4. *Private vulnerability reporting*, *Secret scanning*, regras e aprovação de workflows externos só ficam disponíveis com o repositório público (ou com GitHub Pro).
 
 ## Cada release
 

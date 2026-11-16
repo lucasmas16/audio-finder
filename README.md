@@ -24,7 +24,7 @@ Baixe `AudioFinder-Setup-<versão>.exe` na página de Releases e execute. A inst
 Os executáveis ainda não têm assinatura digital, então o Windows SmartScreen pode avisar "Editor desconhecido". Para conferir que o arquivo veio da pipeline deste repositório:
 
 ```powershell
-gh attestation verify .\AudioFinder-Setup-1.0.0.exe --repo <dono>/<repositório>
+gh attestation verify .\AudioFinder-Setup-1.0.0.exe --repo lucasmas16/audio-finder
 Get-FileHash .\AudioFinder-Setup-1.0.0.exe -Algorithm SHA256   # compare com SHA256SUMS.txt
 ```
 
