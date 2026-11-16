@@ -21,7 +21,7 @@ C#, Windows Forms, .NET Framework 4.8 e APIs nativas do Windows.
 
 Baixe `AudioFinder-Setup-<versão>.exe` na página de Releases e execute. A instalação é só para o usuário atual, em `%LOCALAPPDATA%\Programs\AudioFinder`, sem pedir administrador, com atalho no Menu Iniciar e desinstalação em **Configurações › Aplicativos**. Atualizar mantém configurações e atalhos. Também há um `.zip` portátil.
 
-Os executáveis ainda não têm assinatura digital, então o Windows SmartScreen pode avisar "Editor desconhecido". Para conferir que o arquivo veio da pipeline deste repositório:
+Os executáveis ainda não têm assinatura digital, então o Windows SmartScreen pode avisar "Editor desconhecido". O build já está preparado para assinar ([assinatura de código](docs/ASSINATURA.md)). Para conferir que o arquivo veio da pipeline deste repositório:
 
 ```powershell
 gh attestation verify .\AudioFinder-Setup-1.0.0.exe --repo lucasmas16/audio-finder
@@ -45,7 +45,7 @@ O projeto também pode ser aberto pelo `AudioFinder.csproj` no Visual Studio com
 
 `powershell -ExecutionPolicy Bypass -File .\build.ps1 -Release` cria em `release/` o instalador, o `.zip` portátil e `SHA256SUMS.txt`, usando a versão do arquivo `VERSION`. O pacote contém só uma lista fixa de arquivos: executável, config, licença e ícones. `.\tests\installer-smoke.ps1` instala numa pasta temporária, reinstala, testa as recusas de segurança e desinstala.
 
-Para publicar, atualize `VERSION`, faça o commit e envie a tag correspondente (por exemplo `git tag v1.0.0` e `git push origin v1.0.0`). A pipeline [release](.github/workflows/release.yml) compila, roda a verificação de privacidade e os testes determinísticos, testa o instalador, gera a atestação de origem e cria um **rascunho** de release para revisão. Detalhes em [publicação](docs/PUBLICACAO.md).
+Para publicar, atualize `VERSION`, faça o commit e envie a tag correspondente (por exemplo `git tag v1.0.0` e `git push origin v1.0.0`). A pipeline [release](.github/workflows/release.yml) compila, roda a verificação de privacidade e os testes determinísticos, testa o instalador, gera a atestação de origem e cria um **rascunho** de release para revisão. Detalhes em [publicação](docs/PUBLICACAO.md). `-SignScript tools\sign.ps1` assina o aplicativo e o instalador durante o build, e `-RequireSigned` falha se algo sair sem assinatura.
 
 ## Verificar
 

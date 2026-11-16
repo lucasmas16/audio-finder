@@ -1,6 +1,11 @@
 name: Release
 
 # Push a tag such as v1.0.0 (matching the VERSION file) to build, test and draft a GitHub release.
+#
+# Code signing is chosen by the repository variable SIGNING_MODE (Settings › Secrets and variables › Actions):
+#   (unset)   unsigned packages, as before
+#   signpath  sign the app and the installer through SignPath (see docs/ASSINATURA.md)
+#   local     build and test only; the maintainer signs locally with tools/sign-release.ps1
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
@@ -15,31 +20,102 @@ concurrency:
 jobs:
   release:
     runs-on: windows-2025
-    timeout-minutes: 25
+    timeout-minutes: 40
     permissions:
       contents: write       # create the draft release
       id-token: write       # sign the build provenance attestation
       attestations: write   # store the attestation
+      actions: read         # SignPath reads the uploaded artifact and job details
     env:
       TAG: ${{ github.ref_name }}
+      SIGNING_MODE: ${{ vars.SIGNING_MODE }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Conferir tag e VERSION
+      - name: Conferir tag, VERSION e modo de assinatura
         shell: pwsh
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           if ($env:TAG -ne "v$version") { throw "A tag $env:TAG não corresponde ao arquivo VERSION ($version)." }
+          if ($env:SIGNING_MODE -notin @('', 'signpath', 'local')) { throw "SIGNING_MODE desconhecido: $env:SIGNING_MODE" }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verificação de privacidade
         run: node tools/check-privacy.cjs
 
       - name: Compilar aplicativo e pacotes
+        if: env.SIGNING_MODE != 'signpath'
         shell: pwsh
         run: ./build.ps1 -Release -Version $env:VERSION
+
+      # --- SignPath: app signed before it is embedded in the installer, then the installer itself ---
+      - name: Compilar aplicativo
+        if: env.SIGNING_MODE == 'signpath'
+        shell: pwsh
+        run: ./build.ps1 -Version $env:VERSION
+
+      - name: Enviar aplicativo para assinatura
+        id: app-unsigned
+        if: env.SIGNING_MODE == 'signpath'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: app-unsigned
+          path: dist/AudioFinder.exe
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Assinar aplicativo (SignPath)
+        if: env.SIGNING_MODE == 'signpath'
+        uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: app
+          github-artifact-id: ${{ steps.app-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed/app
+
+      - name: Empacotar com o aplicativo assinado
+        if: env.SIGNING_MODE == 'signpath'
+        shell: pwsh
+        run: |
+          Copy-Item signed/app/AudioFinder.exe dist/AudioFinder.exe -Force
+          ./build.ps1 -PackageOnly -RequireSigned -Version $env:VERSION
+
+      - name: Enviar instalador para assinatura
+        id: setup-unsigned
+        if: env.SIGNING_MODE == 'signpath'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: setup-unsigned
+          path: release/AudioFinder-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Assinar instalador (SignPath)
+        if: env.SIGNING_MODE == 'signpath'
+        uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: setup
+          github-artifact-id: ${{ steps.setup-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed/setup
+
+      - name: Atualizar instalador e checksums
+        if: env.SIGNING_MODE == 'signpath'
+        shell: pwsh
+        run: |
+          Copy-Item signed/setup/AudioFinder-Setup-$env:VERSION.exe release/ -Force
+          ./build.ps1 -ChecksumsOnly -RequireSigned -Version $env:VERSION
+      # --- end SignPath ---
 
       - name: Testes determinísticos
         shell: pwsh
@@ -51,7 +127,9 @@ jobs:
         shell: pwsh
         run: ./tests/installer-smoke.ps1 -Integration
 
+      # Locally signed files differ from CI output, so provenance is attested only for files built here.
       - name: Atestar origem dos pacotes
+        if: env.SIGNING_MODE != 'local'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
@@ -64,5 +142,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $files = Get-ChildItem release -File | ForEach-Object FullName
-          gh release create $env:TAG @files --draft --verify-tag --generate-notes --title "Audio Finder $env:VERSION"
+          if ($env:SIGNING_MODE -eq 'local') {
+            gh release create $env:TAG --draft --verify-tag --generate-notes --title "Audio Finder $env:VERSION"
+            "Rascunho sem arquivos: rode tools/sign-release.ps1 -Tag $env:TAG para anexar os pacotes assinados." | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          } else {
+            $files = Get-ChildItem release -File | ForEach-Object FullName
+            gh release create $env:TAG @files --draft --verify-tag --generate-notes --title "Audio Finder $env:VERSION"
+          }

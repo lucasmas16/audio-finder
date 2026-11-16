@@ -13,4 +13,4 @@ Use **Security › Report a vulnerability** neste repositório (relato privado d
 
 ## Releases
 
-Os pacotes são gerados apenas pela pipeline do GitHub Actions a partir de uma tag, com atestação de origem (`gh attestation verify`) e `SHA256SUMS.txt`. As actions usadas são fixadas por SHA e atualizadas pelo Dependabot. Os executáveis ainda não têm assinatura digital de código.
+Os pacotes são gerados apenas pela pipeline do GitHub Actions a partir de uma tag, com atestação de origem (`gh attestation verify`) e `SHA256SUMS.txt`. As actions usadas são fixadas por SHA e atualizadas pelo Dependabot. Os executáveis ainda não têm assinatura digital de código; o caminho para ativá-la está em [docs/ASSINATURA.md](docs/ASSINATURA.md).
