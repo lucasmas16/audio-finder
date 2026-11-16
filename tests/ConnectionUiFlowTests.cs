@@ -26,7 +26,7 @@ namespace AudioFinder {
   }
   [STAThread] static int Main(string[] args){
    Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
-   var settings=new Settings();settings.Devices.Add(new SavedDevice{Id="fake-bt-flow",Name="Fone de fluxo",Bluetooth=true,IconPreset="airpods"});settings.Slots[0].DeviceId="fake-bt-flow";
+   var settings=new Settings{Language=Language.Portuguese};settings.Devices.Add(new SavedDevice{Id="fake-bt-flow",Name="Fone de fluxo",Bluetooth=true,IconPreset="airpods"});settings.Slots[0].DeviceId="fake-bt-flow";
    settings.Devices.Add(new SavedDevice{Id="fake-wired-flow",Name="Monitor de fluxo",IconPreset="monitor-tv"});settings.Slots[1].DeviceId="fake-wired-flow";
    string folder=Path.Combine(args[0],Guid.NewGuid().ToString("N"));var store=new SettingsStore(Path.Combine(folder,"settings.xml"));store.Save(settings);
    var requests=new List<TaskCompletionSource<Endpoint>>();var tokens=new List<CancellationToken>();

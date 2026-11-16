@@ -2,8 +2,8 @@
   "description": "Exceções revisadas por conteúdo exato. Revisar novamente após qualquer alteração.",
   "files": {
     "installer/Setup.cs": {
-      "sha256": "9d84dcbfebaa48841e350a62796520096ed4850a39ae5f221baa324eff56aadb",
-      "reason": "Linhas 400-401: CLSID ShellLink e IID IShellLinkW, identificadores COM públicos do Windows; não são dados pessoais.",
+      "sha256": "bd9c18603b17a16252b86090dd3cbf95cb2bda755638e293b7ff14371cde7df7",
+      "reason": "Linhas 410-411: CLSID ShellLink e IID IShellLinkW, identificadores COM públicos do Windows; não são dados pessoais.",
       "rules": ["longIdentifier"]
     },
     "AudioFinder.ico": {

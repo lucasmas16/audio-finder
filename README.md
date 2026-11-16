@@ -1,129 +1,126 @@
 ﻿# Audio Finder
 
-Aplicativo de bandeja para Windows que alterna a saída de áudio padrão por atalhos globais, com até oito posições e histórico de dispositivos Bluetooth.
+**English** | [Português (Brasil)](README.pt-BR.md)
+
+Windows tray app that switches the default audio output with global shortcuts, with up to eight positions and a history of Bluetooth devices.
 
 ## Download
 
-[![Baixar o instalador para Windows](https://img.shields.io/badge/Baixar_instalador-Windows_10%2F11_64--bit-2ea44f?style=for-the-badge)](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Setup.exe)
+[![Download the Windows installer](https://img.shields.io/badge/Download_installer-Windows_10%2F11_64--bit-2ea44f?style=for-the-badge)](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Setup.exe)
 &nbsp;
-[![Baixar a versão portátil](https://img.shields.io/badge/Vers%C3%A3o_port%C3%A1til-.zip-555555?style=for-the-badge)](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Portable.zip)
+[![Download the portable version](https://img.shields.io/badge/Portable_version-.zip-555555?style=for-the-badge)](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Portable.zip)
 
-[![Última versão](https://img.shields.io/github/v/release/lucasmas16/audio-finder?label=%C3%BAltima%20vers%C3%A3o)](https://github.com/lucasmas16/audio-finder/releases/latest)
+[![Latest version](https://img.shields.io/github/v/release/lucasmas16/audio-finder?label=latest%20version)](https://github.com/lucasmas16/audio-finder/releases/latest)
 
-Os botões sempre baixam a versão mais recente.
+The buttons always download the latest version.
 
-1. Clique em **Baixar instalador** e abra o `AudioFinder-Setup.exe`.
-2. Se o Windows mostrar "O Windows protegeu o computador", clique em **Mais informações › Executar assim mesmo**. O aviso aparece porque o instalador ainda não tem assinatura digital ([como conferir a origem](#instalar)).
-3. Clique em **Instalar**. Não precisa de administrador. O Audio Finder abre no ícone perto do relógio e fica no Menu Iniciar.
+1. Click **Download installer** and open `AudioFinder-Setup.exe`.
+2. If Windows shows "Windows protected your PC", click **More info › Run anyway**. The warning appears because the installer is not digitally signed yet ([how to verify where it came from](#install)).
+3. Click **Install**. No administrator rights needed. Audio Finder opens on the icon next to the clock and stays in the Start menu.
 
-| Arquivo | Para quem |
+| File | Who it is for |
 | --- | --- |
-| [`AudioFinder-Setup.exe`](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Setup.exe) | A maioria das pessoas: instala, cria o atalho e permite desinstalar em **Configurações › Aplicativos** |
-| [`AudioFinder-Portable.zip`](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Portable.zip) | Quem prefere não instalar: extraia e rode o `AudioFinder.exe` |
-| [`SHA256SUMS.txt`](https://github.com/lucasmas16/audio-finder/releases/latest/download/SHA256SUMS.txt) | Conferir a integridade dos arquivos |
+| [`AudioFinder-Setup.exe`](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Setup.exe) | Most people: installs, creates the shortcut and can be uninstalled from **Settings › Apps** |
+| [`AudioFinder-Portable.zip`](https://github.com/lucasmas16/audio-finder/releases/latest/download/AudioFinder-Portable.zip) | If you prefer not to install: extract it and run `AudioFinder.exe` |
+| [`SHA256SUMS.txt`](https://github.com/lucasmas16/audio-finder/releases/latest/download/SHA256SUMS.txt) | Check the integrity of the files |
 
-Requer Windows 10 (1903 ou mais recente) ou Windows 11, 64 bits. Versões anteriores e notas de cada versão ficam em [Releases](https://github.com/lucasmas16/audio-finder/releases).
+Requires 64-bit Windows 10 (1903 or later) or Windows 11. Older versions and release notes are under [Releases](https://github.com/lucasmas16/audio-finder/releases).
 
-## Funcionalidades
+## Features
 
-- Cadastro de saídas de áudio e atalhos globais.
-- Persistência de configurações, histórico Bluetooth e recuperação por backup.
-- Tema claro/escuro, notificações e início opcional com o Windows.
-- Barra horizontal de troca com posições dos atalhos, imagem por dispositivo e destaque ampliado da saída selecionada.
-- Ao ativar uma saída Bluetooth desconectada, tenta conectar pelo driver de áudio existente, mostra progresso com o ícone cadastrado e aguarda até 15 segundos pela saída ativa. Falhas usam uma composição iconográfica do computador e do dispositivo.
-- Nove modelos de imagem (Fone In-Ear, Fone Earbud, Monitor de Áudio, Fone Premium, Fone Gamer, Fone Bluetooth OverEar, Monitor/Tv, Fone Esportivo e Fone Esportivo de Condução Óssea), além do ícone padrão e PNG próprio no editor.
+- Set up audio outputs and global shortcuts.
+- Settings, Bluetooth history and recovery from a backup copy are saved.
+- English and Portuguese interface: follows the Windows display language and can be switched with the **PT | EN** selector in the main window. The installer follows the Windows language.
+- Light/dark theme, on-screen notices and optional start with Windows.
+- Horizontal switch bar with the shortcut positions, an image per device and an enlarged highlight for the selected output.
+- When you activate a disconnected Bluetooth output, it asks the existing audio driver to connect, shows progress with the device's image and waits up to 15 seconds for the output to become active. Failures use a picture of the computer and the device.
+- Nine image models (in-ear earbuds, open-fit earbuds, studio speakers, premium headphones, gaming headset, wireless over-ear headphones, monitor/TV, sports earbuds and bone-conduction headset), plus the default icon and your own PNG in the editor.
 
-## Tecnologias
+## Technologies
 
-C#, Windows Forms, .NET Framework 4.8 e APIs nativas do Windows.
+C#, Windows Forms, .NET Framework 4.8 and native Windows APIs.
 
-## Instalar
+## Install
 
-Use os botões de [Download](#download). A instalação é só para o usuário atual, em `%LOCALAPPDATA%\Programs\AudioFinder`, sem pedir administrador, com atalho no Menu Iniciar e desinstalação em **Configurações › Aplicativos**. Atualizar mantém configurações e atalhos. Também há um `.zip` portátil.
+Use the [Download](#download) buttons. It installs for the current user only, in `%LOCALAPPDATA%\Programs\AudioFinder`, without administrator rights, with a Start menu shortcut and uninstall from **Settings › Apps**. Updating keeps settings and shortcuts. A portable `.zip` is also available.
 
-Os executáveis ainda não têm assinatura digital, então o Windows SmartScreen pode avisar "Editor desconhecido". O build já está preparado para assinar ([assinatura de código](docs/ASSINATURA.md)). Para conferir que o arquivo veio da pipeline deste repositório:
+The executables are not digitally signed yet, so Windows SmartScreen may warn about an "Unknown publisher". The build is already prepared for signing ([code signing](docs/ASSINATURA.md), in Portuguese). To verify that a file came from this repository's pipeline:
 
 ```powershell
 gh attestation verify .\AudioFinder-Setup.exe --repo lucasmas16/audio-finder
-Get-FileHash .\AudioFinder-Setup.exe -Algorithm SHA256   # compare com SHA256SUMS.txt
+Get-FileHash .\AudioFinder-Setup.exe -Algorithm SHA256   # compare with SHA256SUMS.txt
 ```
 
-Opções do instalador: `/silent`, `/desktop`, `/nolaunch`, `/dir=<pasta>`. Desinstalação silenciosa: `Uninstall.exe /uninstall /silent` (acrescente `/removedata` para apagar também `%LOCALAPPDATA%\AudioFinder`). Erros no modo silencioso vão para `%TEMP%\AudioFinderSetup.log`.
+Installer options: `/silent`, `/desktop`, `/nolaunch`, `/dir=<folder>`. Silent uninstall: `Uninstall.exe /uninstall /silent` (add `/removedata` to also delete `%LOCALAPPDATA%\AudioFinder`). Errors in silent mode go to `%TEMP%\AudioFinderSetup.log`.
 
-## Executar a partir do código
+## Run from source
 
-Requer Windows 10/11 x64 e .NET Framework 4.8. O script usa o compilador instalado com o Framework; não depende de NuGet.
+Requires Windows 10/11 x64 and .NET Framework 4.8. The script uses the compiler installed with the Framework; no NuGet needed.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 .\dist\AudioFinder.exe
 ```
 
-O projeto também pode ser aberto pelo `AudioFinder.csproj` no Visual Studio com o targeting pack 4.8.
+The project can also be opened from `AudioFinder.csproj` in Visual Studio with the 4.8 targeting pack.
 
-## Gerar uma versão
+## Build a release
 
-`powershell -ExecutionPolicy Bypass -File .\build.ps1 -Release` cria em `release/` o instalador, o `.zip` portátil e `SHA256SUMS.txt`, usando a versão do arquivo `VERSION`. O pacote contém só uma lista fixa de arquivos: executável, config, licença e ícones. `.\tests\installer-smoke.ps1` instala numa pasta temporária, reinstala, testa as recusas de segurança e desinstala.
+`powershell -ExecutionPolicy Bypass -File .\build.ps1 -Release` creates the installer, the portable `.zip` and `SHA256SUMS.txt` in `release/`, using the version in the `VERSION` file. The package contains a fixed list of files only: executable, config, license and icons. `.\tests\installer-smoke.ps1` installs into a temporary folder, reinstalls, checks the safety refusals and uninstalls.
 
-Para publicar, atualize `VERSION`, faça o commit e envie a tag correspondente (por exemplo `git tag v1.0.0` e `git push origin v1.0.0`). A pipeline [release](.github/workflows/release.yml) compila, roda a verificação de privacidade e os testes determinísticos, testa o instalador, gera a atestação de origem e cria um **rascunho** de release para revisão. Detalhes em [publicação](docs/PUBLICACAO.md). `-SignScript tools\sign.ps1` assina o aplicativo e o instalador durante o build, e `-RequireSigned` falha se algo sair sem assinatura.
+To publish, update `VERSION`, commit and push the matching tag (for example `git tag v1.0.0` and `git push origin v1.0.0`). The [release](.github/workflows/release.yml) pipeline builds, runs the privacy check and the deterministic tests, tests the installer, creates the provenance attestation and opens a **draft** release for review. Details in [publishing](docs/PUBLICACAO.md) (in Portuguese). `-SignScript tools\sign.ps1` signs the app and the installer during the build, and `-RequireSigned` fails if anything comes out unsigned.
 
-## Verificar
+## Test
 
-`powershell -ExecutionPolicy Bypass -File .\build.ps1 -RunTests`. A suíte existente interage com APIs de áudio e pode trocar temporariamente a saída padrão; execute-a fora de chamadas ou gravações. A compilação simples não executa esses testes. Use `-RunTests -SafeTests` para verificar interface, persistência e atalhos sem trocar a saída de áudio. Os atalhos nativos exigem acesso à sessão interativa do Windows.
+`powershell -ExecutionPolicy Bypass -File .\build.ps1 -RunTests`. The suite talks to the audio APIs and may temporarily change the default output; run it outside calls or recordings. A plain build does not run these tests. Use `-RunTests -SafeTests` to check the interface, persistence and shortcuts without changing the audio output. Native shortcuts need access to the interactive Windows session.
 
-Antes de preparar um commit: `node tools/check-privacy.cjs` (Node.js 24).
+Before preparing a commit: `node tools/check-privacy.cjs` (Node.js 24).
 
-Testes de identidade sem trocar áudio nem registrar atalhos: `powershell -ExecutionPolicy Bypass -File .\tests\device-identity.ps1`.
+Identity tests without changing audio or registering shortcuts: `powershell -ExecutionPolicy Bypass -File .\tests\device-identity.ps1`.
 
-Testes determinísticos de conexão, identidade, cancelamento e timeout, sem conectar hardware: `powershell -ExecutionPolicy Bypass -File .\tests\bluetooth-connection.ps1`. A opção `-Probe` acrescenta uma leitura de capacidade do driver (`BASICSUPPORT`), sem enviar a solicitação de reconexão. A suíte de interface injeta uma falha controlada para dispositivos Bluetooth fictícios. A integração entre controlador e avisos tem teste com backend falso para progresso, outro slot, conclusão atrasada, cancelamento, timeout e notificações desligadas: `powershell -ExecutionPolicy Bypass -File .\tests\connection-ui-flow.ps1`.
+Deterministic connection, identity, cancellation and timeout tests, without connecting hardware: `powershell -ExecutionPolicy Bypass -File .\tests\bluetooth-connection.ps1`. The `-Probe` option adds a read of the driver capability (`BASICSUPPORT`) without sending the reconnect request. The interface suite injects a controlled failure for fake Bluetooth devices. The integration between controller and notices is tested with a fake backend for progress, another slot, late completion, cancellation, timeout and disabled notices: `powershell -ExecutionPolicy Bypass -File .\tests\connection-ui-flow.ps1`.
 
-O cadastro persiste a identidade da interface física e o container do Windows. Se um endpoint for recriado, a associação e o atalho são atualizados somente quando há identidade comprovada, mesmo perfil de áudio e destino único. Nome igual sozinho não identifica hardware; registros antigos sem identidade ou destinos ambíguos permanecem preservados. Identidade é coletada ao reencontrar o endpoint original ou cadastrar uma saída disponível.
+Each entry stores the identity of the physical interface and the Windows container. If an endpoint is recreated, the association and the shortcut are only updated when the identity is proven, the audio profile matches and there is a single target. A matching name alone does not identify hardware; old entries without identity or ambiguous targets are kept as they are. Identity is collected when the original endpoint is found again or when an available output is set up.
 
-## Organização
+## Project layout
 
-- `src/Program.cs`: inicialização e ciclo de vida.
-- `src/Audio.cs`: enumeração, notificações Core Audio e troca de saída.
-- `src/Hotkeys.cs`: atalhos nativos.
-- `src/Models.cs`: preferências e persistência.
-- `src/Views.cs` e `src/Appearance.cs`: interface e tema.
-- `installer/`: instalador por usuário, sem dependências externas.
-- `tests/`: suíte existente; `build.ps1`: compilação e pacotes; `.github/workflows/`: CI e releases.
+- `src/Program.cs`: startup and lifecycle.
+- `src/Audio.cs`: enumeration, Core Audio notifications and output switching.
+- `src/Hotkeys.cs`: native shortcuts.
+- `src/Models.cs`: preferences and persistence.
+- `src/Views.cs` and `src/Appearance.cs`: interface and theme.
+- `src/Localization.cs`: English and Portuguese texts and the language choice.
+- `installer/`: per-user installer with no external dependencies.
+- `tests/`: test suites; `build.ps1`: build and packages; `.github/workflows/`: CI and releases.
 
-Detalhes: [arquitetura](docs/ARQUITETURA.md), [decisão inicial](docs/decisions/0001-organizacao.md), [privacidade](docs/PRIVACIDADE.md) e [contribuição](CONTRIBUTING.md).
+More details, in Portuguese: [architecture](docs/ARQUITETURA.md), [initial decision](docs/decisions/0001-organizacao.md), [privacy](docs/PRIVACIDADE.md) and [contributing](CONTRIBUTING.md).
 
-## Limitações
+## Limitations
 
-Para diagnóstico local, inicie com `--diagnostics` (encerre a instância anterior primeiro). O arquivo `%LOCALAPPDATA%/AudioFinder/connection-diagnostic.log` registra estágios de conexão, posição do atalho, estado da janela e horários, limitado a aproximadamente 256 KiB. Não registra nomes nem IDs dos dispositivos e não envia dados. Sem a opção, esse registro permanece desligado. A suíte `connection-ui-flow.ps1` também verifica os pixels dos resultados no desktop e o loop real da bandeja com eventos concorrentes; precisa de uma sessão interativa.
+For local diagnostics, start with `--diagnostics` (close the running instance first). The file `%LOCALAPPDATA%/AudioFinder/connection-diagnostic.log` records connection stages, shortcut position, window state and timestamps, capped at about 256 KiB. It does not record device names or IDs and sends nothing. Without the option, this log stays off. The `connection-ui-flow.ps1` suite also checks the result pixels on the desktop and the real tray loop with concurrent events; it needs an interactive session.
 
-A mudança afeta as saídas padrão de reprodução; aplicativos com dispositivo fixado podem ignorá-la. A interface interna `IPolicyConfig` não tem contrato público estável. Validações de hardware, Bluetooth e teclas físicas continuam manuais.
+The switch affects the default playback outputs; apps pinned to a specific device may ignore it. The internal `IPolicyConfig` interface has no stable public contract. Hardware, Bluetooth and physical key checks remain manual.
 
-A conexão usa a propriedade pública [KSPROPERTY_ONESHOT_RECONNECT](https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/ksproperty-oneshot-reconnect), via Core Audio topology e `IKsControl`. O driver precisa anunciar suporte; aceitar a solicitação não prova conexão, por isso o aplicativo só troca a saída depois de confirmar um endpoint ativo. Não instala serviços nem reinicia drivers. Saídas sem suporte mostram uma falha e orientam conectar pelas configurações do Windows. Cancelar ou escolher outro slot interrompe a espera e impede a troca posterior; uma solicitação já entregue ao driver pode ainda conectar fisicamente o dispositivo. O aplicativo não envia desconexão para desfazer essa solicitação.
+Connecting uses the public [KSPROPERTY_ONESHOT_RECONNECT](https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/ksproperty-oneshot-reconnect) property through the Core Audio topology and `IKsControl`. The driver must advertise support; accepting the request does not prove a connection, so the app only switches the output after confirming an active endpoint. It does not install services or restart drivers. Outputs without support show a failure and suggest connecting from Windows settings. Cancelling or choosing another slot stops the wait and prevents a later switch; a request already handed to the driver may still connect the device. The app does not send a disconnect to undo that request.
 
-## Próximos passos
+## Next steps
 
-- Separar testes de lógica dos testes que interagem com hardware.
-- Avaliar versões futuras do .NET somente com medição de compatibilidade e consumo.
+- Separate logic tests from tests that touch hardware.
+- Consider newer .NET versions only after measuring compatibility and resource use.
 
 ## Code signing policy
 
-As releases ainda **não têm assinatura de código**. Até lá, confira a origem pela atestação da pipeline (`gh attestation verify`) e pelo `SHA256SUMS.txt` de cada release, como descrito em [Instalar](#instalar).
+Releases are **not code signed yet**. Until then, verify their origin with the pipeline attestation (`gh attestation verify`) and the `SHA256SUMS.txt` of each release, as described in [Install](#install).
 
 - Committers and reviewers: [@lucasmas16](https://github.com/lucasmas16)
 - Approvers: [@lucasmas16](https://github.com/lucasmas16)
 
-Quando a assinatura for ativada, só serão assinados binários gerados a partir deste repositório, e cada assinatura exigirá aprovação manual do mantenedor. Detalhes em [assinatura de código](docs/ASSINATURA.md).
+When signing is enabled, only binaries built from this repository will be signed, and each signature will require manual approval by the maintainer. Details in [code signing](docs/ASSINATURA.md) (in Portuguese).
 
 Privacy policy: this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
 
-## Licença
+## License
 
-[MIT](LICENSE). Os ícones de `assets/devices` são ilustrações genéricas de categorias de dispositivos, sem vínculo com fabricantes.
+[MIT](LICENSE). The icons in `assets/devices` are generic illustrations of device categories, with no link to any manufacturer.
 
-## Referências de organização
-
-- [Referência para este tipo de aplicação](https://github.com/dotnet/samples/tree/main/windowsforms).
-- [Modelos de exclusão do GitHub](https://github.com/github/gitignore).
-
-As referências orientaram a organização; a estrutura descrita corresponde ao código existente.
-
-Imagens próprias são copiadas para `%LOCALAPPDATA%/AudioFinder/device-images`; mover o PNG original não altera a imagem salva. Arquivo ausente ou inválido usa o modelo escolhido e, se necessário, o desenho padrão. Para distribuir, mantenha `assets/devices` junto ao executável; ambos os fluxos de compilação copiam esses assets.
+Custom images are copied to `%LOCALAPPDATA%/AudioFinder/device-images`; moving the original PNG does not change the saved image. A missing or invalid file falls back to the chosen model and, if needed, to the default drawing. To distribute the app, keep `assets/devices` next to the executable; both build flows copy these assets.

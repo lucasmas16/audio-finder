@@ -22,9 +22,9 @@ namespace AudioFinder
             for (int i = 0; i < 8; i++)
             {
                 var slot = settings.Slots[i]; if (slot.Key == 0 || String.IsNullOrEmpty(slot.DeviceId)) continue;
-                if (!HotkeyText.Valid(slot.Key, slot.Modifiers)) { Errors[i] = "Combinação não permitida"; continue; }
+                if (!HotkeyText.Valid(slot.Key, slot.Modifiers)) { Errors[i] = L.T("Combinação não permitida", "Combination not allowed"); continue; }
                 if (RegisterHotKey(Handle, i + 1, slot.Modifiers | 0x4000, slot.Key)) registered.Add(i + 1);
-                else Errors[i] = "Atalho ocupado ou reservado pelo Windows (" + Marshal.GetLastWin32Error() + ")";
+                else Errors[i] = L.F("Atalho ocupado ou reservado pelo Windows ({0})", "Shortcut in use or reserved by Windows ({0})", Marshal.GetLastWin32Error());
             }
             return Errors.Count == 0;
         }

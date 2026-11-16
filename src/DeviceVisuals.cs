@@ -12,7 +12,10 @@ namespace AudioFinder
     internal static class DeviceVisuals
     {
         internal static readonly string[] Keys = { "generic", "airpods-pro", "airpods", "edifier-monitors", "kuba-disco", "sony-pulse", "edifier-w820nb", "monitor-tv", "kz-az09pro", "shokz-openrun-pro-2" };
-        internal static readonly string[] Names = { "Ícone padrão", "Fone In-Ear", "Fone Earbud", "Monitor de Áudio", "Fone Premium", "Fone Gamer", "Fone Bluetooth OverEar", "Monitor/Tv", "Fone Esportivo", "Fone Esportivo de Condução Óssea" };
+        private static readonly string[] NamesPortuguese = { "Ícone padrão", "Fone In-Ear", "Fone Earbud", "Monitor de Áudio", "Fone Premium", "Fone Gamer", "Fone Bluetooth OverEar", "Monitor/Tv", "Fone Esportivo", "Fone Esportivo de Condução Óssea" };
+        private static readonly string[] NamesEnglish = { "Default icon", "In-ear earbuds", "Open-fit earbuds", "Studio speakers", "Premium headphones", "Gaming headset", "Wireless over-ear", "Monitor/TV", "Sports earbuds", "Bone conduction" };
+        // Display names follow the UI language; Keys stay fixed because they are stored in settings.
+        internal static string[] Names { get { return L.English ? NamesEnglish : NamesPortuguese; } }
         internal static Image Load(string preset, string custom)
         {
             Image image = TryLoad(custom);
@@ -30,8 +33,8 @@ namespace AudioFinder
         {
             using (var image = Image.FromFile(source))
             {
-                if (image.RawFormat.Guid != System.Drawing.Imaging.ImageFormat.Png.Guid) throw new ArgumentException("Escolha um arquivo PNG válido.");
-                if (image.Width > 8192 || image.Height > 8192) throw new ArgumentException("Use um PNG de até 8192 × 8192 pixels.");
+                if (image.RawFormat.Guid != System.Drawing.Imaging.ImageFormat.Png.Guid) throw new ArgumentException(L.T("Escolha um arquivo PNG válido.", "Choose a valid PNG file."));
+                if (image.Width > 8192 || image.Height > 8192) throw new ArgumentException(L.T("Use um PNG de até 8192 × 8192 pixels.", "Use a PNG up to 8192 × 8192 pixels."));
                 string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AudioFinder", "device-images");
                 Directory.CreateDirectory(folder);
                 string target = Path.Combine(folder, Guid.NewGuid().ToString("N") + ".png");
@@ -94,11 +97,11 @@ namespace AudioFinder
         internal IconPicker()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.ResizeRedraw, true);
-            AccessibleName = "Imagem do dispositivo"; AccessibleRole = AccessibleRole.Grouping; TabStop = false;
+            AccessibleName = L.T("Imagem do dispositivo", "Device image"); AccessibleRole = AccessibleRole.Grouping; TabStop = false;
             for (int i = 0; i < DeviceVisuals.Keys.Length; i++) AddTile(new IconTile(this, i, DeviceVisuals.Names[i], DeviceVisuals.Load(DeviceVisuals.Keys[i], "")));
-            custom = new IconTile(this, -1, "Imagem própria", null); AddTile(custom);
-            change = new SoftButton { Text = "Trocar…", AccessibleName = "Trocar imagem própria", Visible = false };
-            change.Click += delegate { RequestCustom(); }; tips.SetToolTip(change, "Escolher outro arquivo PNG");
+            custom = new IconTile(this, -1, L.T("Imagem própria", "Custom image"), null); AddTile(custom);
+            change = new SoftButton { Text = L.T("Trocar…", "Change…"), AccessibleName = L.T("Trocar imagem própria", "Change custom image"), Visible = false };
+            change.Click += delegate { RequestCustom(); }; tips.SetToolTip(change, L.T("Escolher outro arquivo PNG", "Choose another PNG file"));
             Controls.Add(change);
             UpdateTiles();
         }
@@ -118,7 +121,7 @@ namespace AudioFinder
         internal void SetCustom(string path)
         {
             var image = DeviceVisuals.LoadCustom(path);
-            if (image == null) throw new ArgumentException("Não foi possível abrir a imagem.");
+            if (image == null) throw new ArgumentException(L.T("Não foi possível abrir a imagem.", "The image could not be opened."));
             customImage = path; useCustom = true; custom.SetImage(image); UpdateTiles();
         }
         internal void SelectPreset(int index) { preset = Math.Max(0, Math.Min(DeviceVisuals.Keys.Length - 1, index)); useCustom = false; UpdateTiles(); }
@@ -263,7 +266,7 @@ namespace AudioFinder
         {
             connecting = inProgress; connected = success; DoubleBuffered = true;
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.ResizeRedraw, true); BackColor = Color.Transparent;
-            AccessibleName = "Computador " + (connecting ? "tentando conectar à posição " : connected ? "conectado à posição " : "sem conexão com a posição ") + output.Position + ": " + output.Name;
+            AccessibleName = (connecting ? L.F("Computador tentando conectar à posição {0}: {1}", "Computer connecting to position {0}: {1}", output.Position, output.Name) : connected ? L.F("Computador conectado à posição {0}: {1}", "Computer connected to position {0}: {1}", output.Position, output.Name) : L.F("Computador sem conexão com a posição {0}: {1}", "Computer not connected to position {0}: {1}", output.Position, output.Name));
             AccessibleRole = AccessibleRole.Graphic;
             artwork = new DeviceArtwork(); artwork.SetImage(output.IconPreset, output.IconPath); Controls.Add(artwork);
             animation = new Timer { Interval = 40 }; animation.Tick += delegate {
@@ -327,8 +330,8 @@ namespace AudioFinder
             }
             using (var font = new Font("Segoe UI", 8.5f))
             {
-                TextRenderer.DrawText(g, "Computador", font, new Rectangle((int)left - 20, Height - PaintUi.S(this, 26), (int)size + 40, PaintUi.S(this, 22)), palette.Muted, TextFormatFlags.HorizontalCenter);
-                TextRenderer.DrawText(g, connecting ? "Bluetooth" : connected ? "Conectado" : "Sem conexão", font, new Rectangle((int)(Width * 0.38f), Height - PaintUi.S(this, 26), (int)(Width * 0.26f), PaintUi.S(this, 22)), connecting ? palette.Muted : palette.Text, TextFormatFlags.HorizontalCenter);
+                TextRenderer.DrawText(g, L.T("Computador", "Computer"), font, new Rectangle((int)left - 20, Height - PaintUi.S(this, 26), (int)size + 40, PaintUi.S(this, 22)), palette.Muted, TextFormatFlags.HorizontalCenter);
+                TextRenderer.DrawText(g, connecting ? "Bluetooth" : connected ? L.T("Conectado", "Connected") : L.T("Sem conexão", "Not connected"), font, new Rectangle((int)(Width * 0.38f), Height - PaintUi.S(this, 26), (int)(Width * 0.26f), PaintUi.S(this, 22)), connecting ? palette.Muted : palette.Text, TextFormatFlags.HorizontalCenter);
             }
         }
         protected override void Dispose(bool disposing) { if (disposing) { animation.Stop(); animation.Dispose(); clock.Stop(); } base.Dispose(disposing); }
@@ -343,7 +346,7 @@ namespace AudioFinder
         {
             output = value; Selected = selected; DoubleBuffered = true;
             SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent;
-            AccessibleName = "Posição " + value.Position + (selected ? ", saída em uso: " : ", saída configurada: ") + value.Name;
+            AccessibleName = selected ? L.F("Posição {0}, saída em uso: {1}", "Position {0}, output in use: {1}", value.Position, value.Name) : L.F("Posição {0}, saída configurada: {1}", "Position {0}, configured output: {1}", value.Position, value.Name);
             artwork = new DeviceArtwork(); artwork.SetImage(value.IconPreset, value.IconPath); Controls.Add(artwork);
         }
         public void SetPalette(Palette value) { palette = value; artwork.SetPalette(value); Invalidate(); }
@@ -358,7 +361,7 @@ namespace AudioFinder
             using (var font = new Font("Segoe UI", 8))
             {
                 TextRenderer.DrawText(e.Graphics, output.Name, font, new Rectangle(6, Height - PaintUi.S(this, 47), Width - 12, PaintUi.S(this, 24)), palette.Text, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-                TextRenderer.DrawText(e.Graphics, Selected ? "✓ Em uso" : output.Active ? "Disponível" : "Indisponível", font, new Rectangle(4, Height - PaintUi.S(this, 24), Width - 8, PaintUi.S(this, 20)), color, TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
+                TextRenderer.DrawText(e.Graphics, Selected ? L.T("✓ Em uso", "✓ In use") : output.Active ? L.T("Disponível", "Available") : L.T("Indisponível", "Unavailable"), font, new Rectangle(4, Height - PaintUi.S(this, 24), Width - 8, PaintUi.S(this, 20)), color, TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
             }
         }
     }

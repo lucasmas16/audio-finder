@@ -20,6 +20,7 @@ Configurações ↔ XML local
 - `src/Hotkeys.cs`: atalhos nativos.
 - `src/Models.cs`: preferências e persistência.
 - `src/Views.cs` e `src/Appearance.cs`: interface e tema.
+- `src/Localization.cs`: textos em português e inglês; o idioma segue o Windows ou a escolha salva em `settings.xml`.
 - `installer/`: instalador por usuário ([ADR 0003](decisions/0003-instalador-e-releases.md)).
 - `tests/`: suíte existente; `build.ps1`: compilação e pacotes; `.github/workflows/`: CI e releases.
 

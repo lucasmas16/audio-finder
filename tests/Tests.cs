@@ -30,6 +30,7 @@ namespace AudioFinder
             string temporary = Path.Combine(output, "test-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(temporary);
             try
             {
+                L.Apply(Language.Portuguese);
                 var config = new Settings(); Check(config.Slots.Count == 8, "Oito posições fixas");
                 config.Devices.Add(new SavedDevice { Id = "offline-bluetooth", Name = "Fone Bluetooth de teste", Bluetooth = true });
                 config.Devices.Add(new SavedDevice { Id = "wired", Name = "Alto-falantes", Bluetooth = false });
@@ -70,7 +71,7 @@ namespace AudioFinder
                         Check(Enumerable.Range(0, 3).Select(audio.Default).SequenceEqual(defaults), "Saídas originais restauradas após teste");
                     }
                 }
-                var appStore = new SettingsStore(Path.Combine(temporary, "app.xml")); var demo = new Settings();
+                var appStore = new SettingsStore(Path.Combine(temporary, "app.xml")); var demo = new Settings { Language = Language.Portuguese };
                 var available = endpoints.FirstOrDefault(d => d.Active && d.Id == defaults[1]) ?? endpoints.FirstOrDefault(d => d.Active);
                 if (available != null) { demo.Devices.Add(new SavedDevice { Id = available.Id, Name = available.Name, Bluetooth = available.Bluetooth }); demo.Slots[0].DeviceId = available.Id; }
                 demo.Devices.Add(config.Devices[0]); demo.Slots[1].DeviceId = "offline-bluetooth";
@@ -172,8 +173,20 @@ namespace AudioFinder
                 Check(DeviceChoice.Build(listed, known, new[] { "absent" }).Last().Endpoint.Id == "absent", "Dispositivo do atalho ausente do Windows continua listado");
                 var droppedNew = DeviceChoice.Build(new[] { new Endpoint { Id = "active-new", Name = "Novo ativo", State = 8 } }, known, new[] { "", "active-new" });
                 Check(droppedNew.Count == 1 && !droppedNew[0].Saved && !droppedNew[0].Endpoint.Active, "Seleção nova que desconecta continua visível até ser trocada");
+                string legacyPath = Path.Combine(temporary, "legacy.xml");
+                File.WriteAllText(legacyPath, "<?xml version=\"1.0\"?><Settings><Theme>Light</Theme><ShowErrors>true</ShowErrors><Enabled>true</Enabled></Settings>");
+                Check(new SettingsStore(legacyPath).Load().Language == Language.Auto, "Configuração antiga sem idioma usa Automático");
+                var originalCulture = Thread.CurrentThread.CurrentUICulture;
+                try
+                {
+                    Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en-US"); L.Apply(Language.Auto); bool englishWindows = L.English;
+                    Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("pt-BR"); L.Apply(Language.Auto); bool portugueseWindows = !L.English;
+                    L.Apply(Language.English); bool forcedEnglish = L.English;
+                    Check(englishWindows && portugueseWindows && forcedEnglish, "Automático segue o Windows e a escolha explícita prevalece");
+                }
+                finally { Thread.CurrentThread.CurrentUICulture = originalCulture; L.Apply(Language.Portuguese); }
                 var liveEndpoints = new List<Endpoint> { new Endpoint { Id = "live-other", Name = "Fone de outro atalho", State = 8, Bluetooth = true } };
-                var liveSettings = new Settings();
+                var liveSettings = new Settings { Language = Language.Portuguese };
                 liveSettings.Devices.Add(new SavedDevice { Id = "live-other", Name = "Fone de outro atalho", Bluetooth = true });
                 liveSettings.Devices.Add(new SavedDevice { Id = "live-own", Name = "Fone do atalho", Bluetooth = true, IconPreset = "kz-az09pro" });
                 liveSettings.Slots[0].DeviceId = "live-other"; liveSettings.Slots[2].DeviceId = "live-own";
@@ -218,6 +231,30 @@ namespace AudioFinder
                         Check(picker.CustomPath == "" && picker.Preset == DeviceVisuals.Keys[1] && picker.HasCustom, "Clicar em modelo usa o modelo e mantém a imagem própria disponível na sessão");
                     }
                     liveApp.EndCapture();
+                    liveApp.ShowSettings(); Pump(150);
+                    var portugueseMain = Application.OpenForms.OfType<MainForm>().Single();
+                    Check(portugueseMain.Controls.OfType<Label>().Any(l => l.Text == "SUAS SAÍDAS") && portugueseMain.Controls.OfType<LanguageToggle>().Single().Checked == false, "Janela em português com seletor PT marcado");
+                    var toEnglish = liveApp.Config.Copy(); toEnglish.Language = Language.English;
+                    Check(liveApp.Apply(toEnglish, out liveError) && L.English && liveStore.Load().Language == Language.English, "Escolher inglês aplica e persiste o idioma");
+                    Pump(250);
+                    var englishMain = Application.OpenForms.OfType<MainForm>().Single();
+                    Check(!Object.ReferenceEquals(englishMain, portugueseMain) && portugueseMain.IsDisposed && englishMain.Controls.OfType<Label>().Any(l => l.Text == "YOUR OUTPUTS") && englishMain.Controls.OfType<LanguageToggle>().Single().Checked, "Troca de idioma reabre a janela já traduzida");
+                    Snapshot(englishMain, Path.Combine(output, "audio-finder-english.png"));
+                    liveApp.BeginCapture();
+                    using (var editor = new SlotEditor(liveApp, 2))
+                    {
+                        Check(editor.Text == "Device 3 · Audio Finder" && editor.Controls.OfType<IconPicker>().Single().Tiles[1].Caption == "In-ear earbuds" && editor.Status == SlotEditor.KeptOfflineMessage && SlotEditor.KeptOfflineMessage.StartsWith("This device"), "Editor, modelos e avisos em inglês");
+                        Snapshot(editor, Path.Combine(output, "audio-finder-editor-english.png"));
+                    }
+                    liveApp.EndCapture();
+                    using (var englishToast = OutputToast.Selection(2, liveApp.Config, liveEndpoints, Appearance.Dark)) Check(englishToast.Heading == "Output selected", "Aviso de troca em inglês");
+                    Check(HotkeyText.Format(0, 0) == "No shortcut" && DeviceVisuals.Keys.SequenceEqual(new[] { "generic", "airpods-pro", "airpods", "edifier-monitors", "kuba-disco", "sony-pulse", "edifier-w820nb", "monitor-tv", "kz-az09pro", "shokz-openrun-pro-2" }), "Inglês traduz textos sem mudar as chaves salvas");
+                    var toPortuguese = liveApp.Config.Copy(); toPortuguese.Language = Language.Portuguese;
+                    Check(liveApp.Apply(toPortuguese, out liveError) && !L.English, "Voltar ao português");
+                    Pump(250);
+                    Check(Application.OpenForms.OfType<MainForm>().Single().Controls.OfType<Label>().Any(l => l.Text == "SUAS SAÍDAS"), "Janela volta ao português");
+                    foreach (var form in Application.OpenForms.OfType<MainForm>().ToList()) form.Close();
+                    Pump(100);
                 }
                 var eight = new Settings();
                 for (int i = 0; i < 8; i++) { string id = "eight-" + i; eight.Devices.Add(new SavedDevice { Id = id, Name = "Dispositivo " + (i + 1), IconPreset = DeviceVisuals.Keys[1 + i % (DeviceVisuals.Keys.Length - 1)] }); eight.Slots[i].DeviceId = id; }

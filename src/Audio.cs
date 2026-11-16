@@ -13,7 +13,7 @@ namespace AudioFinder
         internal uint State;
         internal bool Bluetooth;
         internal bool Active { get { return State == 1; } }
-        public override string ToString() { return Name + (Active ? "" : " · indisponível"); }
+        public override string ToString() { return Name + (Active ? "" : L.T(" · indisponível", " · unavailable")); }
     }
     internal sealed class AudioService : IDisposable
     {
@@ -45,7 +45,7 @@ namespace AudioFinder
                         if (String.IsNullOrEmpty(instance)) instance = ReadString(properties, new PropertyKey("b3f8fa53-0004-438e-9003-51a46e139bfc", 2));
                         string bus = ReadString(properties, new PropertyKey("a45c254e-df1c-4efd-8020-67d146a850e0", 24));
                         string container = ReadGuid(properties, new PropertyKey("8c7ed206-3f8a-4827-b3ab-ae9e1faefc6c", 2));
-                        result.Add(new Endpoint { Id = id, Name = String.IsNullOrEmpty(name) ? "Saída de áudio" : name, State = state, InstanceId = instance, ContainerId = container, Bluetooth = bus.StartsWith("BTH", StringComparison.OrdinalIgnoreCase) || IsBluetooth(instance) });
+                        result.Add(new Endpoint { Id = id, Name = String.IsNullOrEmpty(name) ? L.T("Saída de áudio", "Audio output") : name, State = state, InstanceId = instance, ContainerId = container, Bluetooth = bus.StartsWith("BTH", StringComparison.OrdinalIgnoreCase) || IsBluetooth(instance) });
                     }
                     catch (COMException) { /* A device may disappear while the collection is being read. */ }
                     finally { Release(properties); Release(device); }
@@ -62,7 +62,7 @@ namespace AudioFinder
         }
         internal void Select(string id)
         {
-            if (!Enumerate().Any(d => d.Id == id && d.Active)) throw new InvalidOperationException("O dispositivo está desconectado ou desabilitado.");
+            if (!Enumerate().Any(d => d.Id == id && d.Active)) throw new InvalidOperationException(L.T("O dispositivo está desconectado ou desabilitado.", "The device is disconnected or disabled."));
             var previous = Enumerable.Range(0, 3).Select(Default).ToArray();
             IPolicyConfig policy = null;
             try
@@ -71,7 +71,7 @@ namespace AudioFinder
                 try
                 {
                     for (int role = 0; role < 3; role++) Marshal.ThrowExceptionForHR(policy.SetDefaultEndpoint(id, role));
-                    for (int role = 0; role < 3; role++) if (Default(role) != id) throw new InvalidOperationException("O Windows não confirmou a troca de saída. Tente novamente.");
+                    for (int role = 0; role < 3; role++) if (Default(role) != id) throw new InvalidOperationException(L.T("O Windows não confirmou a troca de saída. Tente novamente.", "Windows did not confirm the output change. Try again."));
                 }
                 catch { for (int role = 0; role < 3; role++) if (!String.IsNullOrEmpty(previous[role])) policy.SetDefaultEndpoint(previous[role], role); throw; }
             }

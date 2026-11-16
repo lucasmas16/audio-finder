@@ -26,7 +26,7 @@ namespace AudioFinder
                     string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AudioFinder", "settings.xml");
                     using (var context = new TrayApp(new SettingsStore(path), args.Contains("--tray"))) Application.Run(context);
                 }
-                catch (Exception ex) { MessageBox.Show("Não foi possível iniciar o Audio Finder.\n\n" + ex.Message, "Audio Finder", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                catch (Exception ex) { MessageBox.Show(L.T("Não foi possível iniciar o Audio Finder.", "Audio Finder could not start.") + "\n\n" + ex.Message, "Audio Finder", MessageBoxButtons.OK, MessageBoxIcon.Error); }
                 finally { mutex.ReleaseMutex(); }
             }
         }
@@ -88,7 +88,7 @@ namespace AudioFinder
         {
             ConnectionTrace.Write("startup build=" + ConnectionTrace.Build);
             connectBluetooth = connect ?? BluetoothConnection.ConnectAsync;
-            store = settingsStore; Config = store.Load();
+            store = settingsStore; Config = store.Load(); L.Apply(Config.Language);
             dispatch = new DispatchForm { ShowRequested = ShowSettings };
             Shortcuts = new Hotkeys(); Shortcuts.Pressed += SelectSlot;
             audio = new AudioService(enumerate == null);
@@ -102,8 +102,22 @@ namespace AudioFinder
             tray.MouseClick += delegate(object sender, MouseEventArgs e) { if (e.Button == MouseButtons.Left) ShowSettings(); };
             Shortcuts.Apply(Config); Refresh();
             if (!String.IsNullOrEmpty(store.Warning)) LastError = store.Warning;
-            if (Shortcuts.Errors.Count > 0) LastError = "Há atalhos ocupados. Abra Editar para escolher outra combinação.";
+            if (Shortcuts.Errors.Count > 0) LastError = BusyShortcuts;
             if (!startHidden || LastError.Length > 0) ShowSettings();
+        }
+        private static string BusyShortcuts { get { return L.T("Há atalhos ocupados. Abra Editar para escolher outra combinação.", "Some shortcuts are in use. Open Edit to choose another combination."); } }
+        // The settings window builds its texts once; reopen it in the new language after the current event finishes.
+        private void RebuildSettings()
+        {
+            var old = settingsForm;
+            if (old == null || old.IsDisposed || closing) return;
+            dispatch.BeginInvoke((Action)delegate
+            {
+                if (closing || old.IsDisposed) return;
+                var bounds = old.Bounds; var state = old.WindowState;
+                settingsForm = new MainForm(this) { StartPosition = FormStartPosition.Manual, Bounds = bounds, WindowState = state };
+                settingsForm.Show(); old.Close(); old.Dispose(); settingsForm.Activate();
+            });
         }
         internal void QueueRefresh()
         {
@@ -125,29 +139,29 @@ namespace AudioFinder
                     catch (Exception ex)
                     {
                         if (!(ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException)) throw;
-                        LastError = "Não foi possível salvar a identidade dos dispositivos: " + ex.Message;
+                        LastError = L.T("Não foi possível salvar a identidade dos dispositivos: ", "The device identity could not be saved: ") + ex.Message;
                     }
                 }
             }
-            catch (Exception ex) { LastError = "Não foi possível consultar o áudio: " + ex.Message; Devices = new System.Collections.Generic.List<Endpoint>(); DefaultId = ""; }
+            catch (Exception ex) { LastError = L.T("Não foi possível consultar o áudio: ", "Audio devices could not be read: ") + ex.Message; Devices = new System.Collections.Generic.List<Endpoint>(); DefaultId = ""; }
             UpdateMenu(); if (Updated != null) Updated();
         }
         private void UpdateMenu()
         {
             var menu = new ContextMenuStrip { Renderer = new ThemeMenuRenderer(new Palette(Config.Theme)), ShowImageMargin = false };
-            menu.Items.Add("Audio Finder · abrir", null, delegate { ShowSettings(); }); menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(L.T("Audio Finder · abrir", "Audio Finder · open"), null, delegate { ShowSettings(); }); menu.Items.Add(new ToolStripSeparator());
             for (int i = 0; i < 8; i++)
             {
                 int index = i; var slot = Config.Slots[i]; var saved = Config.Devices.FirstOrDefault(d => d.Id == slot.DeviceId);
                 if (saved == null) continue;
                 bool active = Devices.Any(d => d.Id == slot.DeviceId && d.Active);
-                var item = new ToolStripMenuItem((i + 1) + "  " + saved.Name + (active ? "" : " · desconectado") + "    " + slot.Shortcut, null, delegate { SelectSlot(index); }) { Checked = DefaultId == slot.DeviceId };
+                var item = new ToolStripMenuItem((i + 1) + "  " + saved.Name + (active ? "" : L.T(" · desconectado", " · disconnected")) + "    " + slot.Shortcut, null, delegate { SelectSlot(index); }) { Checked = DefaultId == slot.DeviceId };
                 menu.Items.Add(item);
             }
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("Atualizar dispositivos", null, delegate { Refresh(); });
-            menu.Items.Add(Config.Enabled ? "Pausar atalhos" : "Ativar atalhos", null, delegate { var next = Config.Copy(); next.Enabled = !next.Enabled; string error; if (!Apply(next, out error)) Fail(error); });
-            menu.Items.Add("Sair", null, delegate { ExitThread(); });
+            menu.Items.Add(L.T("Atualizar dispositivos", "Refresh devices"), null, delegate { Refresh(); });
+            menu.Items.Add(Config.Enabled ? L.T("Pausar atalhos", "Pause shortcuts") : L.T("Ativar atalhos", "Enable shortcuts"), null, delegate { var next = Config.Copy(); next.Enabled = !next.Enabled; string error; if (!Apply(next, out error)) Fail(error); });
+            menu.Items.Add(L.T("Sair", "Exit"), null, delegate { ExitThread(); });
             var old = tray.ContextMenuStrip; tray.ContextMenuStrip = menu; if (old != null) old.Dispose();
         }
         internal bool Apply(Settings next, out string error)
@@ -157,13 +171,15 @@ namespace AudioFinder
             bool registered = Shortcuts.Apply(next);
             if (!registered && (next.Enabled != Config.Enabled || Shortcuts.Errors.Keys.Any(i => next.Slots[i].Key != Config.Slots[i].Key || next.Slots[i].Modifiers != Config.Slots[i].Modifiers)))
             {
-                error = String.Join("\n", Shortcuts.Errors.Select(p => "Dispositivo " + (p.Key + 1) + ": " + p.Value));
+                error = String.Join("\n", Shortcuts.Errors.Select(p => L.F("Dispositivo {0}: {1}", "Device {0}: {1}", p.Key + 1, p.Value)));
                 Shortcuts.Apply(Config); return false;
             }
             try { store.Save(next); }
-            catch (Exception ex) { Shortcuts.Apply(Config); error = "Não foi possível salvar: " + ex.Message; return false; }
+            catch (Exception ex) { Shortcuts.Apply(Config); error = L.T("Não foi possível salvar: ", "Could not save: ") + ex.Message; return false; }
             CancelConnection();
-            Config = next; LastError = Shortcuts.Errors.Count > 0 ? "Há atalhos ocupados. Abra Editar para escolher outra combinação." : "";
+            bool languageChanged = next.Language != Config.Language;
+            Config = next; LastError = Shortcuts.Errors.Count > 0 ? BusyShortcuts : "";
+            if (languageChanged) { L.Apply(Config.Language); RebuildSettings(); }
             if (!Config.ShowErrors && toast != null) { toast.Close(); toast = null; }
             UpdateMenu(); if (Updated != null) Updated(); return true;
         }
@@ -177,7 +193,7 @@ namespace AudioFinder
             // COM calls and Updated subscribers can dispatch another selection while refreshing.
             if (closing || operation != operationSequence) return;
             var slot = Config.Slots[index]; var device = Config.Devices.FirstOrDefault(d => d.Id == slot.DeviceId);
-            if (device == null) { Fail("O dispositivo " + (index + 1) + " ainda não foi cadastrado."); return; }
+            if (device == null) { Fail(L.F("O dispositivo {0} ainda não foi cadastrado.", "Device {0} has not been set up yet.", index + 1)); return; }
             var target = device.Copy();
             var cancellation = new CancellationTokenSource(); connectionCancellation = cancellation;
             bool attemptedConnection = false;
@@ -187,7 +203,7 @@ namespace AudioFinder
                 var endpoint = BluetoothConnection.Resolve(target, Devices, true);
                 if (endpoint == null)
                 {
-                    if (!target.Bluetooth) throw new InvalidOperationException("Esta saída não está conectada ao computador.");
+                    if (!target.Bluetooth) throw new InvalidOperationException(L.T("Esta saída não está conectada ao computador.", "This output is not connected to the computer."));
                     attemptedConnection = true;
                     progress = OutputToast.Connecting(index, Config, Config.Theme);
                     progress.CancelRequested += delegate { if (Object.ReferenceEquals(connectionCancellation, cancellation)) CancelConnection(); };
@@ -201,13 +217,13 @@ namespace AudioFinder
                 if (!IsCurrentOperation(operation, cancellation)) return;
                 // Do not trust a driver request (or stale worker result) as proof of usable audio.
                 var confirmed = BluetoothConnection.Resolve(target, Devices, true);
-                if (endpoint == null || confirmed == null || endpoint.Id != confirmed.Id) throw new InvalidOperationException("O Windows ainda não confirmou esta saída como conectada.");
+                if (endpoint == null || confirmed == null || endpoint.Id != confirmed.Id) throw new InvalidOperationException(L.T("O Windows ainda não confirmou esta saída como conectada.", "Windows has not confirmed this output as connected yet."));
                 var current = Config.Devices.FirstOrDefault(d => d.Id == Config.Slots[index].DeviceId);
-                if (current == null || Config.Devices.Any(d => d != current && String.Equals(d.Id, confirmed.Id, StringComparison.OrdinalIgnoreCase))) throw new InvalidOperationException("Esta saída está associada a outro cadastro. Atualize os dispositivos antes de ativar.");
+                if (current == null || Config.Devices.Any(d => d != current && String.Equals(d.Id, confirmed.Id, StringComparison.OrdinalIgnoreCase))) throw new InvalidOperationException(L.T("Esta saída está associada a outro cadastro. Atualize os dispositivos antes de ativar.", "This output is linked to another entry. Refresh the devices before activating it."));
                 ConnectionTrace.Write("operation=" + operation + " select-output");
                 selectOutput(confirmed.Id); Refresh();
                 if (!IsCurrentOperation(operation, cancellation)) return;
-                if (!String.Equals(DefaultId, confirmed.Id, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("O Windows não confirmou esta saída como padrão.");
+                if (!String.Equals(DefaultId, confirmed.Id, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.T("O Windows não confirmou esta saída como padrão.", "Windows did not confirm this output as the default."));
                 LastError = "";
                 ShowToast(attemptedConnection ? OutputToast.Connected(index, Config, Config.Theme) : OutputToast.Selection(index, Config, Devices, Config.Theme));
             }
@@ -215,7 +231,7 @@ namespace AudioFinder
             {
                 if (closing || cancellation.IsCancellationRequested || !Object.ReferenceEquals(connectionCancellation, cancellation)) { ConnectionTrace.Write("operation=" + operation + " obsolete closing=" + closing + " canceled=" + cancellation.IsCancellationRequested); return; }
                 ConnectionTrace.Write("operation=" + operation + " failed type=" + ex.GetType().Name);
-                LastError = device.Name + "\n" + (ex is OperationCanceledException ? "A tentativa terminou sem confirmar a conexão. Tente novamente." : ex is COMException ? "O Windows não conseguiu ativar esta saída. Verifique a conexão." : ex.Message);
+                LastError = device.Name + "\n" + (ex is OperationCanceledException ? L.T("A tentativa terminou sem confirmar a conexão. Tente novamente.", "The attempt ended without confirming the connection. Try again.") : ex is COMException ? L.T("O Windows não conseguiu ativar esta saída. Verifique a conexão.", "Windows could not activate this output. Check the connection.") : ex.Message);
                 Refresh();
                 if (!IsCurrentOperation(operation, cancellation)) return;
                 ShowToast(OutputToast.DeviceFailure(index, Config, LastError, Config.Theme));

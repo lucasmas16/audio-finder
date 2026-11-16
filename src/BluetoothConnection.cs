@@ -28,7 +28,7 @@ namespace AudioFinder
                 // Observe a late native failure without allowing it to activate an output.
                 ObserveLateFailure(worker);
                 cancellation.ThrowIfCancellationRequested();
-                throw new TimeoutException("O dispositivo Bluetooth não confirmou a conexão a tempo. Verifique se está ligado e próximo do computador.");
+                throw new TimeoutException(L.T("O dispositivo Bluetooth não confirmou a conexão a tempo. Verifique se está ligado e próximo do computador.", "The Bluetooth device did not confirm the connection in time. Check that it is on and close to the computer."));
             }
             finally
             {
@@ -52,9 +52,9 @@ namespace AudioFinder
                 {
                     var endpoints = audio.Enumerate();
                     var endpoint = Resolve(target, endpoints, false);
-                    if (endpoint == null) throw new InvalidOperationException("O Windows não encontrou uma saída Bluetooth com a identidade cadastrada. Conecte o dispositivo nas configurações do Windows.");
+                    if (endpoint == null) throw new InvalidOperationException(L.T("O Windows não encontrou uma saída Bluetooth com a identidade cadastrada. Conecte o dispositivo nas configurações do Windows.", "Windows could not find a Bluetooth output with the saved identity. Connect the device in Windows settings."));
                     if (endpoint.Active) return endpoint;
-                    if (!endpoint.Bluetooth || endpoint.State != 8) throw new InvalidOperationException("Esta saída Bluetooth está desabilitada ou não está presente no Windows.");
+                    if (!endpoint.Bluetooth || endpoint.State != 8) throw new InvalidOperationException(L.T("Esta saída Bluetooth está desabilitada ou não está presente no Windows.", "This Bluetooth output is disabled or not present in Windows."));
                     cancellation.ThrowIfCancellationRequested();
                     BluetoothDriver.Request(endpoint.Id, false, cancellation);
                     while (true)
@@ -99,7 +99,7 @@ namespace AudioFinder
                 {
                     if (diagnostic != null) diagnostic("Topology activation: 0x" + topologyHr.ToString("X8"));
                     if (probeOnly) return false;
-                    throw new InvalidOperationException("O Windows não oferece controle de conexão para esta saída Bluetooth. Conecte nas configurações do Windows.");
+                    throw new InvalidOperationException(L.T("O Windows não oferece controle de conexão para esta saída Bluetooth. Conecte nas configurações do Windows.", "Windows does not offer connection control for this Bluetooth output. Connect it in Windows settings."));
                 }
                 var topology = (IDeviceTopology)topologyObject; uint count;
                 Marshal.ThrowExceptionForHR(topology.GetConnectorCount(out count));
@@ -145,8 +145,8 @@ namespace AudioFinder
             }
             finally { AudioService.Release(topologyObject); AudioService.Release(endpoint); AudioService.Release(enumerator); }
             if (probeOnly) return supported;
-            if (!supported) throw new InvalidOperationException("O driver desta saída não oferece conexão Bluetooth pelo aplicativo. Conecte nas configurações do Windows.");
-            if (!accepted) throw new InvalidOperationException("O Windows recusou a tentativa de conexão Bluetooth. Verifique o Bluetooth e o dispositivo.");
+            if (!supported) throw new InvalidOperationException(L.T("O driver desta saída não oferece conexão Bluetooth pelo aplicativo. Conecte nas configurações do Windows.", "The driver of this output does not allow Bluetooth connection from the app. Connect it in Windows settings."));
+            if (!accepted) throw new InvalidOperationException(L.T("O Windows recusou a tentativa de conexão Bluetooth. Verifique o Bluetooth e o dispositivo.", "Windows refused the Bluetooth connection attempt. Check Bluetooth and the device."));
             return true;
         }
     }

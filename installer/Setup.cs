@@ -16,6 +16,13 @@ using Microsoft.Win32;
 // It never requests elevation and only deletes folders that carry its own installation marker.
 namespace AudioFinderSetup
 {
+    // The installer follows the Windows display language: Portuguese for pt-*, English otherwise.
+    internal static class Text
+    {
+        private static readonly bool Portuguese = String.Equals(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, "pt", StringComparison.OrdinalIgnoreCase);
+        internal static string T(string portuguese, string english) { return Portuguese ? portuguese : english; }
+    }
+
     internal static class Product
     {
         internal const string Name = "Audio Finder";
@@ -63,7 +70,7 @@ namespace AudioFinderSetup
                 else if (lower == "/fromtemp") o.FromTemp = true;
                 else if (lower.StartsWith("/dir=")) o.Dir = arg.Substring(5).Trim('"');
                 else if (lower.StartsWith("/parent=") && Int32.TryParse(arg.Substring(8), out o.Parent)) { }
-                else throw new ArgumentException("Opção desconhecida: " + arg);
+                else throw new ArgumentException(Text.T("Opção desconhecida: ", "Unknown option: ") + arg);
             }
             return o;
         }
@@ -86,7 +93,7 @@ namespace AudioFinderSetup
             Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
             Options options;
             try { options = Options.Parse(args); }
-            catch (ArgumentException ex) { MessageBox.Show(ex.Message + "\n\nUso: /silent /dir=<pasta> /nolaunch /desktop /uninstall /removedata", Product.Name, MessageBoxButtons.OK, MessageBoxIcon.Warning); return 1; }
+            catch (ArgumentException ex) { MessageBox.Show(ex.Message + Text.T("\n\nUso: /silent /dir=<pasta> /nolaunch /desktop /uninstall /removedata", "\n\nUsage: /silent /dir=<folder> /nolaunch /desktop /uninstall /removedata"), Product.Name, MessageBoxButtons.OK, MessageBoxIcon.Warning); return 1; }
             try
             {
                 if (options.Uninstall) return RunUninstall(options);
@@ -165,11 +172,11 @@ namespace AudioFinderSetup
         }
         internal static string FrameworkProblem()
         {
-            if (!Environment.Is64BitOperatingSystem) return "O Audio Finder requer Windows 10 ou 11 de 64 bits.";
+            if (!Environment.Is64BitOperatingSystem) return Text.T("O Audio Finder requer Windows 10 ou 11 de 64 bits.", "Audio Finder requires 64-bit Windows 10 or 11.");
             using (var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"))
             {
                 object release = key == null ? null : key.GetValue("Release");
-                return release is int && (int)release >= Product.RequiredFramework ? null : "O Audio Finder requer o .NET Framework 4.8, incluído no Windows 10 (1903 ou mais recente) e no Windows 11.";
+                return release is int && (int)release >= Product.RequiredFramework ? null : Text.T("O Audio Finder requer o .NET Framework 4.8, incluído no Windows 10 (1903 ou mais recente) e no Windows 11.", "Audio Finder requires .NET Framework 4.8, included in Windows 10 (1903 or later) and Windows 11.");
             }
         }
         internal static List<Process> RunningCopies(string dir)
@@ -188,16 +195,16 @@ namespace AudioFinderSetup
         {
             var running = RunningCopies(dir);
             if (running.Count == 0) return;
-            if (!confirmClose()) throw new OperationCanceledException("O Audio Finder continua aberto.");
+            if (!confirmClose()) throw new OperationCanceledException(Text.T("O Audio Finder continua aberto.", "Audio Finder is still open."));
             foreach (var process in running) using (process) { try { process.Kill(); process.WaitForExit(5000); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } }
-            if (RunningCopies(dir).Count > 0) throw new IOException("Não foi possível encerrar o Audio Finder. Use Sair no ícone da bandeja e tente novamente.");
+            if (RunningCopies(dir).Count > 0) throw new IOException(Text.T("Não foi possível encerrar o Audio Finder. Use Sair no ícone da bandeja e tente novamente.", "Audio Finder could not be closed. Use Exit on the tray icon and try again."));
         }
 
         internal static void Install(string dir, Options options, Func<bool> confirmClose)
         {
             string framework = FrameworkProblem(); if (framework != null) throw new InvalidOperationException(framework);
             if (Directory.Exists(dir) && Directory.EnumerateFileSystemEntries(dir).Any() && !IsInstallation(dir))
-                throw new InvalidOperationException("A pasta escolhida já contém arquivos que não são de uma instalação do Audio Finder:\n" + dir);
+                throw new InvalidOperationException(Text.T("A pasta escolhida já contém arquivos que não são de uma instalação do Audio Finder:\n", "The chosen folder already contains files that are not from an Audio Finder installation:\n") + dir);
             StopCopies(dir, confirmClose);
             string parent = Path.GetDirectoryName(dir); Directory.CreateDirectory(parent);
             string staging = dir + ".new-" + Guid.NewGuid().ToString("N"), previous = dir + ".old-" + Guid.NewGuid().ToString("N");
@@ -219,16 +226,17 @@ namespace AudioFinderSetup
             if (!options.NoIntegration)
             {
                 Register(dir);
-                ShellLink.Create(Product.StartMenuShortcut, Path.Combine(dir, Product.Exe), dir, "Alterna a saída de áudio por atalhos globais");
-                if (options.Desktop) ShellLink.Create(Product.DesktopShortcut, Path.Combine(dir, Product.Exe), dir, "Alterna a saída de áudio por atalhos globais");
+                ShellLink.Create(Product.StartMenuShortcut, Path.Combine(dir, Product.Exe), dir, ShortcutDescription);
+                if (options.Desktop) ShellLink.Create(Product.DesktopShortcut, Path.Combine(dir, Product.Exe), dir, ShortcutDescription);
             }
             if (!options.NoLaunch && !options.Silent) Process.Start(new ProcessStartInfo(Path.Combine(dir, Product.Exe)) { UseShellExecute = true, WorkingDirectory = dir });
         }
+        private static string ShortcutDescription { get { return Text.T("Alterna a saída de áudio por atalhos globais", "Switches the audio output with global shortcuts"); } }
         private static void Extract(string target)
         {
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(Product.Payload))
             {
-                if (stream == null) throw new InvalidDataException("O pacote de instalação está incompleto.");
+                if (stream == null) throw new InvalidDataException(Text.T("O pacote de instalação está incompleto.", "The installation package is incomplete."));
                 using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
                 {
                     string root = Path.GetFullPath(target).TrimEnd('\\') + "\\";
@@ -237,14 +245,14 @@ namespace AudioFinderSetup
                     {
                         string name = entry.FullName.Replace('/', '\\');
                         string path = Path.GetFullPath(Path.Combine(root, name));
-                        if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Entrada inválida no pacote: " + entry.FullName);
+                        if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException(Text.T("Entrada inválida no pacote: ", "Invalid package entry: ") + entry.FullName);
                         if (name.EndsWith("\\")) { Directory.CreateDirectory(path); continue; }
                         Directory.CreateDirectory(Path.GetDirectoryName(path));
                         entry.ExtractToFile(path, true);
                     }
                 }
             }
-            if (!File.Exists(Path.Combine(target, Product.Exe))) throw new InvalidDataException("O pacote de instalação não contém o aplicativo.");
+            if (!File.Exists(Path.Combine(target, Product.Exe))) throw new InvalidDataException(Text.T("O pacote de instalação não contém o aplicativo.", "The installation package does not contain the app."));
         }
         private static void Register(string dir)
         {
@@ -268,7 +276,7 @@ namespace AudioFinderSetup
 
         internal static void Uninstall(string dir, Options options, Func<bool> confirmClose)
         {
-            if (!IsInstallation(dir)) throw new InvalidOperationException("Nenhuma instalação do Audio Finder foi encontrada em:\n" + dir);
+            if (!IsInstallation(dir)) throw new InvalidOperationException(Text.T("Nenhuma instalação do Audio Finder foi encontrada em:\n", "No Audio Finder installation was found in:\n") + dir);
             StopCopies(dir, confirmClose);
             if (!options.NoIntegration)
             {
@@ -316,31 +324,31 @@ namespace AudioFinderSetup
         internal SetupForm(Options value, bool removing)
         {
             options = value; uninstall = removing; dir = Program.Resolve(options.Dir);
-            Text = (uninstall ? "Desinstalar " : "Instalar ") + Product.Name;
+            Text = (uninstall ? AudioFinderSetup.Text.T("Desinstalar ", "Uninstall ") : AudioFinderSetup.Text.T("Instalar ", "Install ")) + Product.Name;
             Font = new Font("Segoe UI", 9.5f); AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
             FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = MinimizeBox = false; StartPosition = FormStartPosition.CenterScreen;
             ClientSize = new Size(520, 300);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch (ArgumentException) { }
-            var title = new Label { Text = uninstall ? "Desinstalar o " + Product.Name : Product.Name + " " + Product.Version, Font = new Font("Segoe UI Semibold", 15f), AutoSize = false };
+            var title = new Label { Text = uninstall ? T("Desinstalar o ", "Uninstall ") + Product.Name : Product.Name + " " + Product.Version, Font = new Font("Segoe UI Semibold", 15f), AutoSize = false };
             title.SetBounds(24, 18, 472, 34);
             string installed = Installer.InstalledVersion();
             string detail;
-            if (uninstall) detail = "O aplicativo será removido de:\n" + dir;
+            if (uninstall) detail = T("O aplicativo será removido de:\n", "The app will be removed from:\n") + dir;
             else
             {
-                detail = "Instalação só para o seu usuário, sem pedir administrador, em:\n" + dir;
+                detail = T("Instalação só para o seu usuário, sem pedir administrador, em:\n", "Installs for your user only, without administrator rights, in:\n") + dir;
                 Version current, next;
                 if (installed != null && System.Version.TryParse(installed, out current) && System.Version.TryParse(Product.Version, out next))
-                    detail = (next < current ? "Atenção: a versão instalada (" + installed + ") é mais nova que esta. " : next == current ? "Esta versão já está instalada e será reinstalada. " : "Atualiza a versão " + installed + ". ") + "Configurações e atalhos são mantidos.\n" + dir;
+                    detail = (next < current ? String.Format(T("Atenção: a versão instalada ({0}) é mais nova que esta. ", "Note: the installed version ({0}) is newer than this one. "), installed) : next == current ? T("Esta versão já está instalada e será reinstalada. ", "This version is already installed and will be reinstalled. ") : String.Format(T("Atualiza a versão {0}. ", "Updates version {0}. "), installed)) + T("Configurações e atalhos são mantidos.\n", "Settings and shortcuts are kept.\n") + dir;
             }
             var info = new Label { Text = detail, AutoSize = false }; info.SetBounds(24, 62, 472, 66);
             first = new CheckBox { AutoSize = false }; first.SetBounds(24, 136, 472, 26);
             second = new CheckBox { AutoSize = false }; second.SetBounds(24, 166, 472, 26);
-            if (uninstall) { first.Text = "Remover também configurações, histórico e imagens salvas"; second.Visible = false; }
-            else { first.Text = "Criar atalho na área de trabalho"; second.Text = "Abrir o Audio Finder ao concluir"; second.Checked = true; }
+            if (uninstall) { first.Text = T("Remover também configurações, histórico e imagens salvas", "Also remove settings, history and saved images"); second.Visible = false; }
+            else { first.Text = T("Criar atalho na área de trabalho", "Create a desktop shortcut"); second.Text = T("Abrir o Audio Finder ao concluir", "Open Audio Finder when done"); second.Checked = true; }
             status = new Label { AutoSize = false, ForeColor = SystemColors.GrayText }; status.SetBounds(24, 202, 472, 40);
-            primary = new Button { Text = uninstall ? "Desinstalar" : "Instalar" }; primary.SetBounds(290, 252, 100, 32);
-            cancel = new Button { Text = "Cancelar", DialogResult = DialogResult.Cancel }; cancel.SetBounds(398, 252, 100, 32);
+            primary = new Button { Text = uninstall ? T("Desinstalar", "Uninstall") : T("Instalar", "Install") }; primary.SetBounds(290, 252, 100, 32);
+            cancel = new Button { Text = T("Cancelar", "Cancel"), DialogResult = DialogResult.Cancel }; cancel.SetBounds(398, 252, 100, 32);
             primary.Click += delegate { if (finished) { Close(); return; } Run(); };
             cancel.Click += delegate { Close(); };
             AcceptButton = primary; CancelButton = cancel;
@@ -348,25 +356,27 @@ namespace AudioFinderSetup
             string problem = uninstall ? null : Installer.FrameworkProblem();
             if (problem != null) { status.Text = problem; primary.Enabled = false; }
         }
+        // Form.Text shadows the Text helper class inside this form.
+        private static string T(string portuguese, string english) { return AudioFinderSetup.Text.T(portuguese, english); }
         private bool ConfirmClose()
         {
-            return MessageBox.Show(this, "O Audio Finder está aberto. Ele será fechado para continuar; suas configurações já estão salvas.", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Information) == DialogResult.OK;
+            return MessageBox.Show(this, T("O Audio Finder está aberto. Ele será fechado para continuar; suas configurações já estão salvas.", "Audio Finder is open. It will be closed to continue; your settings are already saved."), Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Information) == DialogResult.OK;
         }
         private void Run()
         {
             primary.Enabled = cancel.Enabled = first.Enabled = second.Enabled = false; UseWaitCursor = true;
-            status.Text = uninstall ? "Removendo…" : "Instalando…"; status.Refresh();
+            status.Text = uninstall ? T("Removendo…", "Removing…") : T("Instalando…", "Installing…"); status.Refresh();
             try
             {
-                if (uninstall) { options.RemoveData = first.Checked; Installer.Uninstall(dir, options, ConfirmClose); status.Text = "O Audio Finder foi removido."; }
-                else { options.Desktop = first.Checked; options.NoLaunch = !second.Checked; Installer.Install(dir, options, ConfirmClose); status.Text = "Instalação concluída. O Audio Finder fica no Menu Iniciar e no ícone perto do relógio."; }
-                ExitCode = 0; finished = true; primary.Text = "Concluir"; primary.Enabled = true; cancel.Visible = false;
+                if (uninstall) { options.RemoveData = first.Checked; Installer.Uninstall(dir, options, ConfirmClose); status.Text = T("O Audio Finder foi removido.", "Audio Finder was removed."); }
+                else { options.Desktop = first.Checked; options.NoLaunch = !second.Checked; Installer.Install(dir, options, ConfirmClose); status.Text = T("Instalação concluída. O Audio Finder fica no Menu Iniciar e no ícone perto do relógio.", "Installation complete. Audio Finder is in the Start menu and on the icon next to the clock."); }
+                ExitCode = 0; finished = true; primary.Text = T("Concluir", "Finish"); primary.Enabled = true; cancel.Visible = false;
             }
             catch (OperationCanceledException ex) { status.Text = ex.Message; primary.Enabled = cancel.Enabled = first.Enabled = second.Enabled = true; }
             catch (Exception ex)
             {
                 if (!(ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is InvalidDataException || ex is COMException)) throw;
-                ExitCode = 1; status.ForeColor = Color.Firebrick; status.Text = "Não foi possível concluir: " + ex.Message; cancel.Enabled = true; cancel.Text = "Fechar";
+                ExitCode = 1; status.ForeColor = Color.Firebrick; status.Text = T("Não foi possível concluir: ", "Could not finish: ") + ex.Message; cancel.Enabled = true; cancel.Text = T("Fechar", "Close");
             }
             finally { UseWaitCursor = false; }
         }

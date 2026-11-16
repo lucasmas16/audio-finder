@@ -33,6 +33,7 @@ namespace AudioFinder
         private readonly TrayApp app;
         private readonly Label title, subtitle, caption, hint, footer, status;
         private readonly ThemeToggle theme;
+        private readonly LanguageToggle language;
         private readonly GlassPanel sidebar;
         private readonly Label currentTitle, currentName, currentState, shortcutTitle, shortcutHelp, errorsTitle, errorsHelp, startupTitle, startupHelp;
         private readonly Toggle enabled, errors, startup;
@@ -43,27 +44,29 @@ namespace AudioFinder
         {
             app = application; Ui.Init(this, "Audio Finder", 1000, 782); MinimumSize = Size;
             title = Ui.Label("Audio Finder", 25, false); title.Font = new Font("Segoe UI Semibold", 25);
-            subtitle = Ui.Label("Seu som. No atalho certo.", 10, true);
+            subtitle = Ui.Label(L.T("Seu som. No atalho certo.", "Your sound. On the right shortcut."), 10, true);
             theme = new ThemeToggle { Checked = app.Config.Theme == Appearance.Dark };
             theme.CheckedChanged += delegate { if (!updating) Change(c => c.Theme = theme.Checked ? Appearance.Dark : Appearance.Light); };
-            caption = Ui.Label("SUAS SAÍDAS", 9, true);
-            hint = Ui.Label("Até 8 dispositivos · escolha a saída e grave seu atalho", 9, true);
+            language = new LanguageToggle { Checked = L.English };
+            language.CheckedChanged += delegate { if (!updating) Change(c => c.Language = language.Checked ? Language.English : Language.Portuguese); };
+            caption = Ui.Label(L.T("SUAS SAÍDAS", "YOUR OUTPUTS"), 9, true);
+            hint = Ui.Label(L.T("Até 8 dispositivos · escolha a saída e grave seu atalho", "Up to 8 devices · pick an output and record your shortcut"), 9, true);
             sidebar = new GlassPanel();
-            currentTitle = Ui.Label("TOCANDO AGORA", 9, true);
-            currentName = Ui.Label("Nenhuma saída ativa", 18, false); currentName.Font = new Font("Segoe UI Semibold", 18);
-            currentState = Ui.Label("Saída padrão do Windows", 9, true);
-            shortcutTitle = Ui.Label("Atalhos ativos", 10, false); shortcutHelp = Ui.Label("Funcionam com o app\nna bandeja do Windows.", 9, true);
-            errorsTitle = Ui.Label("Avisos na tela", 10, false); errorsHelp = Ui.Label("Mostra trocas e falhas.\nFecha após 3 segundos.", 9, true);
-            startupTitle = Ui.Label("Iniciar com Windows", 10, false); startupHelp = Ui.Label("Abre direto na bandeja.", 9, true);
-            enabled = new Toggle { AccessibleName = "Ativar atalhos globais" }; errors = new Toggle { AccessibleName = "Mostrar avisos de troca por 3 segundos" }; startup = new Toggle { AccessibleName = "Iniciar com Windows" };
+            currentTitle = Ui.Label(L.T("TOCANDO AGORA", "NOW PLAYING"), 9, true);
+            currentName = Ui.Label(NoActiveOutput, 18, false); currentName.Font = new Font("Segoe UI Semibold", 18);
+            currentState = Ui.Label(WindowsDefault, 9, true);
+            shortcutTitle = Ui.Label(L.T("Atalhos ativos", "Shortcuts on"), 10, false); shortcutHelp = Ui.Label(L.T("Funcionam com o app\nna bandeja do Windows.", "They work while the app\nis in the Windows tray."), 9, true);
+            errorsTitle = Ui.Label(L.T("Avisos na tela", "On-screen notices"), 10, false); errorsHelp = Ui.Label(L.T("Mostra trocas e falhas.\nFecha após 3 segundos.", "Shows switches and failures.\nCloses after 3 seconds."), 9, true);
+            startupTitle = Ui.Label(L.T("Iniciar com Windows", "Start with Windows"), 10, false); startupHelp = Ui.Label(L.T("Abre direto na bandeja.", "Opens straight to the tray."), 9, true);
+            enabled = new Toggle { AccessibleName = L.T("Ativar atalhos globais", "Enable global shortcuts") }; errors = new Toggle { AccessibleName = L.T("Mostrar avisos de troca por 3 segundos", "Show switch notices for 3 seconds") }; startup = new Toggle { AccessibleName = L.T("Iniciar com Windows", "Start with Windows") };
             enabled.CheckedChanged += delegate { if (!updating) Change(c => c.Enabled = enabled.Checked); };
             errors.CheckedChanged += delegate { if (!updating) Change(c => c.ShowErrors = errors.Checked); };
-            startup.CheckedChanged += delegate { if (!updating) { try { Startup.Set(startup.Checked); } catch (Exception ex) { MessageBox.Show(this, ex.Message, "Não foi possível alterar a inicialização"); } UpdateView(); } };
-            history = Ui.Button("Histórico Bluetooth", delegate { using (var form = new HistoryForm(app)) form.ShowDialog(this); });
+            startup.CheckedChanged += delegate { if (!updating) { try { Startup.Set(startup.Checked); } catch (Exception ex) { MessageBox.Show(this, ex.Message, L.T("Não foi possível alterar a inicialização", "Could not change startup")); } UpdateView(); } };
+            history = Ui.Button(L.T("Histórico Bluetooth", "Bluetooth history"), delegate { using (var form = new HistoryForm(app)) form.ShowDialog(this); });
             sidebar.Controls.AddRange(new Control[] { currentTitle, currentName, currentState, shortcutTitle, shortcutHelp, errorsTitle, errorsHelp, startupTitle, startupHelp, enabled, errors, startup, history });
             status = Ui.Label("", 9, true);
-            footer = Ui.Label("Fechar esta janela mantém o Audio Finder na bandeja. Para encerrar, use Sair no ícone perto do relógio.", 9, true);
-            Controls.AddRange(new Control[] { title, subtitle, theme, caption, hint, sidebar, status, footer });
+            footer = Ui.Label(L.T("Fechar esta janela mantém o Audio Finder na bandeja. Para encerrar, use Sair no ícone perto do relógio.", "Closing this window keeps Audio Finder in the tray. To quit, use Exit on the icon next to the clock."), 9, true);
+            Controls.AddRange(new Control[] { title, subtitle, language, theme, caption, hint, sidebar, status, footer });
             for (int i = 0; i < 8; i++)
             {
                 int index = i; rows[i] = new DeviceRow(i + 1);
@@ -76,19 +79,21 @@ namespace AudioFinder
             Ui.Ready(this); MinimumSize = Size;
         }
         private void Change(Action<Settings> action)
-        { var next = app.Config.Copy(); action(next); string error; if (!app.Apply(next, out error)) { MessageBox.Show(this, error, "Não foi possível salvar", MessageBoxButtons.OK, MessageBoxIcon.Warning); UpdateView(); } }
+        { var next = app.Config.Copy(); action(next); string error; if (!app.Apply(next, out error)) { MessageBox.Show(this, error, L.T("Não foi possível salvar", "Could not save"), MessageBoxButtons.OK, MessageBoxIcon.Warning); UpdateView(); } }
+        private static string NoActiveOutput { get { return L.T("Nenhuma saída ativa", "No active output"); } }
+        private static string WindowsDefault { get { return L.T("Saída padrão do Windows", "Windows default output"); } }
         internal void UpdateView()
         {
             if (IsDisposed) return;
             updating = true;
             try
             {
-                theme.Checked = app.Config.Theme == Appearance.Dark; enabled.Checked = app.Config.Enabled; errors.Checked = app.Config.ShowErrors; startup.Checked = Startup.Enabled;
+                theme.Checked = app.Config.Theme == Appearance.Dark; language.Checked = L.English; enabled.Checked = app.Config.Enabled; errors.Checked = app.Config.ShowErrors; startup.Checked = Startup.Enabled;
                 var current = app.Devices.FirstOrDefault(d => d.Id == app.DefaultId);
-                currentName.Text = current == null ? "Nenhuma saída ativa" : current.Name;
-                currentState.Text = current != null && current.Bluetooth ? "Bluetooth · conectado" : "Saída padrão do Windows";
+                currentName.Text = current == null ? NoActiveOutput : current.Name;
+                currentState.Text = current != null && current.Bluetooth ? L.T("Bluetooth · conectado", "Bluetooth · connected") : WindowsDefault;
                 for (int i = 0; i < 8; i++) rows[i].Update(app, i);
-                status.Text = app.LastError.Length > 0 ? app.LastError.Replace("\n", " · ") : "Grave a combinação que o teclado envia. Sugestão: Ctrl + Alt + F1 até F8.";
+                status.Text = app.LastError.Length > 0 ? app.LastError.Replace("\n", " · ") : L.T("Grave a combinação que o teclado envia. Sugestão: Ctrl + Alt + F1 até F8.", "Record the combination your keyboard sends. Suggestion: Ctrl + Alt + F1 to F8.");
                 Ui.Theme(this, app.Config.Theme);
             }
             finally { updating = false; }
@@ -97,7 +102,7 @@ namespace AudioFinder
         {
             base.OnLayout(e); if (sidebar == null) return;
             float scale = PaintUi.Scale(this); int w = (int)(ClientSize.Width / scale), h = (int)(ClientSize.Height / scale);
-            Ui.Bounds(title, this, 28, 19, 500, 44); Ui.Bounds(subtitle, this, 30, 62, 500, 26); Ui.Bounds(theme, this, w - 188, 30, 156, 38);
+            Ui.Bounds(title, this, 28, 19, 500, 44); Ui.Bounds(subtitle, this, 30, 62, 500, 26); Ui.Bounds(theme, this, w - 204, 30, 172, 38); Ui.Bounds(language, this, w - 328, 30, 112, 38);
             int side = 250, right = 302, rw = w - right - 26;
             Ui.Bounds(sidebar, this, 26, 110, side, 554);
             Ui.Bounds(currentTitle, this, 22, 22, 205, 22); Ui.Bounds(currentName, this, 20, 56, 210, 114); Ui.Bounds(currentState, this, 22, 174, 210, 38);
@@ -118,21 +123,21 @@ namespace AudioFinder
         internal readonly SoftButton Activate, Edit;
         internal DeviceRow(int index)
         {
-            number = Ui.Label(index.ToString("00"), 13, true); name = Ui.Label("Dispositivo " + index, 10, false); detail = Ui.Label("Nenhuma saída cadastrada", 8.5f, true);
-            Activate = Ui.Button("Ativar", delegate { }); Edit = Ui.Button("Cadastrar", delegate { });
-            Edit.AccessibleName = "Editar dispositivo " + index; Activate.AccessibleName = "Ativar dispositivo " + index;
+            number = Ui.Label(index.ToString("00"), 13, true); name = Ui.Label(L.F("Dispositivo {0}", "Device {0}", index), 10, false); detail = Ui.Label(L.T("Nenhuma saída cadastrada", "No output set up"), 8.5f, true);
+            Activate = Ui.Button(L.T("Ativar", "Activate"), delegate { }); Edit = Ui.Button(L.T("Cadastrar", "Set up"), delegate { });
+            Edit.AccessibleName = L.F("Editar dispositivo {0}", "Edit device {0}", index); Activate.AccessibleName = L.F("Ativar dispositivo {0}", "Activate device {0}", index);
             Controls.AddRange(new Control[] { number, name, detail, Activate, Edit });
         }
         internal void Update(TrayApp app, int index)
         {
             var slot = app.Config.Slots[index]; var saved = app.Config.Devices.FirstOrDefault(d => d.Id == slot.DeviceId);
             bool active = app.Devices.Any(d => d.Id == slot.DeviceId && d.Active), current = saved != null && app.DefaultId == slot.DeviceId;
-            name.Text = saved == null ? "Dispositivo " + (index + 1) : saved.Name;
-            detail.Text = saved == null ? "Escolha uma saída e um atalho" : (current ? "Em uso" : active ? "Disponível" : "Desconectado") + (saved.Bluetooth ? " · Bluetooth" : "") + "   /   " + slot.Shortcut;
-            if (app.Shortcuts.Errors.ContainsKey(index)) detail.Text = "Atalho ocupado · edite a combinação";
-            else if (!app.Config.Enabled && saved != null) detail.Text += " · pausado";
-            Activate.Text = current ? "Em uso" : "Ativar"; Activate.Selected = current; Activate.Enabled = saved != null;
-            Edit.Text = saved == null ? "Cadastrar" : "Editar";
+            name.Text = saved == null ? L.F("Dispositivo {0}", "Device {0}", index + 1) : saved.Name;
+            detail.Text = saved == null ? L.T("Escolha uma saída e um atalho", "Pick an output and a shortcut") : (current ? L.T("Em uso", "In use") : active ? L.T("Disponível", "Available") : L.T("Desconectado", "Disconnected")) + (saved.Bluetooth ? " · Bluetooth" : "") + "   /   " + slot.Shortcut;
+            if (app.Shortcuts.Errors.ContainsKey(index)) detail.Text = L.T("Atalho ocupado · edite a combinação", "Shortcut in use · edit the combination");
+            else if (!app.Config.Enabled && saved != null) detail.Text += L.T(" · pausado", " · paused");
+            Activate.Text = current ? L.T("Em uso", "In use") : L.T("Ativar", "Activate"); Activate.Selected = current; Activate.Enabled = saved != null;
+            Edit.Text = saved == null ? L.T("Cadastrar", "Set up") : L.T("Editar", "Edit");
         }
         protected override void OnLayout(LayoutEventArgs e)
         {
@@ -146,7 +151,7 @@ namespace AudioFinder
     {
         internal uint Key, Mods;
         internal string Error = "";
-        internal CaptureBox() { ReadOnly = true; ShortcutsEnabled = false; TextAlign = HorizontalAlignment.Center; AccessibleName = "Gravar atalho: pressione a combinação desejada"; }
+        internal CaptureBox() { ReadOnly = true; ShortcutsEnabled = false; TextAlign = HorizontalAlignment.Center; AccessibleName = L.T("Gravar atalho: pressione a combinação desejada", "Record shortcut: press the combination you want"); }
         internal void Set(uint key, uint mods) { Error = ""; Key = key; Mods = mods; Text = HotkeyText.Format(key, mods); }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -155,7 +160,7 @@ namespace AudioFinder
             if (key == Keys.Escape) { Parent.SelectNextControl(this, true, true, true, true); return true; }
             uint mods = ((keyData & Keys.Control) != 0 ? 2u : 0) | ((keyData & Keys.Alt) != 0 ? 1u : 0) | ((keyData & Keys.Shift) != 0 ? 4u : 0);
             if (HotkeyText.Valid((uint)key, mods)) Set((uint)key, mods);
-            else if (key == Keys.F12) { Error = "F12 é reservada pelo Windows. Escolha outra tecla."; Text = "F12 é reservada pelo Windows"; }
+            else if (key == Keys.F12) { Error = L.T("F12 é reservada pelo Windows. Escolha outra tecla.", "F12 is reserved by Windows. Choose another key."); Text = L.T("F12 é reservada pelo Windows", "F12 is reserved by Windows"); }
             return true;
         }
     }
@@ -196,16 +201,16 @@ namespace AudioFinder
         private readonly IconPicker picker;
         private bool loading;
         private string status = "";
-        internal const string NoOutputMessage = "Nenhuma saída conectada. Ligue o dispositivo e ele aparece aqui.";
-        internal const string KeptOfflineMessage = "Este dispositivo está desconectado. Você pode manter ou escolher outro conectado.";
-        internal const string NewOfflineMessage = "Este dispositivo desconectou. Conecte-o de novo ou escolha outro para salvar.";
+        internal static string NoOutputMessage { get { return L.T("Nenhuma saída conectada. Ligue o dispositivo e ele aparece aqui.", "No output connected. Turn the device on and it shows up here."); } }
+        internal static string KeptOfflineMessage { get { return L.T("Este dispositivo está desconectado. Você pode manter ou escolher outro conectado.", "This device is disconnected. You can keep it or pick another connected one."); } }
+        internal static string NewOfflineMessage { get { return L.T("Este dispositivo desconectou. Conecte-o de novo ou escolha outro para salvar.", "This device disconnected. Reconnect it or pick another one to save."); } }
         internal SlotEditor(TrayApp application, int slotIndex)
         {
             app = application; index = slotIndex;
-            Ui.Init(this, "Dispositivo " + (index + 1) + " · Audio Finder", 654, 743); FormBorderStyle = FormBorderStyle.FixedDialog; MinimizeBox = false; StartPosition = FormStartPosition.CenterParent;
-            var title = Ui.Label("Configure seu dispositivo " + (index + 1), 18, false); title.SetBounds(26, 20, 600, 38);
-            var label = Ui.Label("SAÍDA DE ÁUDIO", 9, true); label.SetBounds(28, 74, 500, 25);
-            devices = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, FlatStyle = FlatStyle.Flat, DropDownWidth = 590, AccessibleName = "Saída de áudio" }; devices.SetBounds(28, 104, 594, 30);
+            Ui.Init(this, L.F("Dispositivo {0} · Audio Finder", "Device {0} · Audio Finder", index + 1), 654, 743); FormBorderStyle = FormBorderStyle.FixedDialog; MinimizeBox = false; StartPosition = FormStartPosition.CenterParent;
+            var title = Ui.Label(L.F("Configure seu dispositivo {0}", "Set up your device {0}", index + 1), 18, false); title.SetBounds(26, 20, 600, 38);
+            var label = Ui.Label(L.T("SAÍDA DE ÁUDIO", "AUDIO OUTPUT"), 9, true); label.SetBounds(28, 74, 500, 25);
+            devices = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, FlatStyle = FlatStyle.Flat, DropDownWidth = 590, AccessibleName = L.T("Saída de áudio", "Audio output") }; devices.SetBounds(28, 104, 594, 30);
             devices.DrawMode = DrawMode.OwnerDrawFixed;
             devices.DrawItem += delegate(object sender, DrawItemEventArgs e)
             {
@@ -214,21 +219,21 @@ namespace AudioFinder
                 if (e.Index >= 0) TextRenderer.DrawText(e.Graphics, devices.Items[e.Index].ToString(), devices.Font, Rectangle.Inflate(e.Bounds, -4, 0), p.Text, TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter);
                 if ((e.State & DrawItemState.Focus) != 0) e.DrawFocusRectangle();
             };
-            bluetooth = new CheckBox { Text = "Guardar como fone Bluetooth", AutoSize = true }; bluetooth.SetBounds(28, 147, 590, 30);
+            bluetooth = new CheckBox { Text = L.T("Guardar como fone Bluetooth", "Remember as a Bluetooth headset"), AutoSize = true }; bluetooth.SetBounds(28, 147, 590, 30);
             devices.SelectedIndexChanged += delegate { if (!loading) { ApplyChoice(); UpdateStatus(); } };
-            var imageLabel = Ui.Label("IMAGEM DO DISPOSITIVO", 9, true); imageLabel.SetBounds(28, 180, 400, 25);
+            var imageLabel = Ui.Label(L.T("IMAGEM DO DISPOSITIVO", "DEVICE IMAGE"), 9, true); imageLabel.SetBounds(28, 180, 400, 25);
             picker = new IconPicker(); picker.SetBounds(26, 208, 598, 210);
             picker.CustomRequested += delegate { ChooseImage(); };
-            var keyLabel = Ui.Label("ATALHO GLOBAL", 9, true); keyLabel.SetBounds(28, 436, 500, 24);
+            var keyLabel = Ui.Label(L.T("ATALHO GLOBAL", "GLOBAL SHORTCUT"), 9, true); keyLabel.SetBounds(28, 436, 500, 24);
             capture = new CaptureBox(); capture.SetBounds(28, 467, 357, 31);
             var slot = app.Config.Slots[index]; capture.Set(slot.Key, slot.Modifiers);
-            var suggested = Ui.Button("Usar Ctrl + Alt + F" + (index + 1), delegate { capture.Set((uint)Keys.F1 + (uint)index, 3); }); suggested.SetBounds(400, 458, 225, 43);
-            var help = Ui.Label("Clique no campo e pressione o atalho. Tab avança; Esc sai da gravação.\nTeclados com tecla Fn podem reservar algumas combinações para funções internas.\nO cadastro permanece salvo quando o dispositivo é desconectado.", 9, true); help.SetBounds(28, 513, 594, 70);
+            var suggested = Ui.Button(L.F("Usar Ctrl + Alt + F{0}", "Use Ctrl + Alt + F{0}", index + 1), delegate { capture.Set((uint)Keys.F1 + (uint)index, 3); }); suggested.SetBounds(400, 458, 225, 43);
+            var help = Ui.Label(L.T("Clique no campo e pressione o atalho. Tab avança; Esc sai da gravação.\nTeclados com tecla Fn podem reservar algumas combinações para funções internas.\nO cadastro permanece salvo quando o dispositivo é desconectado.", "Click the field and press the shortcut. Tab moves on; Esc stops recording.\nKeyboards with an Fn key may reserve some combinations for built-in functions.\nThe entry stays saved when the device is disconnected."), 9, true); help.SetBounds(28, 513, 594, 70);
             feedback = Ui.Label("", 9, true); feedback.SetBounds(28, 587, 594, 44);
-            var clear = Ui.Button("Limpar posição", delegate { Save(true); }); clear.SetBounds(26, 670, 145, 44);
-            var noKey = Ui.Button("Sem atalho", delegate { capture.Set(0, 0); }); noKey.SetBounds(178, 670, 130, 44);
-            var cancel = Ui.Button("Cancelar", delegate { DialogResult = DialogResult.Cancel; }); cancel.SetBounds(361, 670, 118, 44);
-            var save = Ui.Button("Salvar", delegate { Save(false); }); save.Primary = true; save.SetBounds(489, 670, 137, 44);
+            var clear = Ui.Button(L.T("Limpar posição", "Clear position"), delegate { Save(true); }); clear.SetBounds(26, 670, 145, 44);
+            var noKey = Ui.Button(L.T("Sem atalho", "No shortcut"), delegate { capture.Set(0, 0); }); noKey.SetBounds(178, 670, 130, 44);
+            var cancel = Ui.Button(L.T("Cancelar", "Cancel"), delegate { DialogResult = DialogResult.Cancel; }); cancel.SetBounds(361, 670, 118, 44);
+            var save = Ui.Button(L.T("Salvar", "Save"), delegate { Save(false); }); save.Primary = true; save.SetBounds(489, 670, 137, 44);
             Controls.AddRange(new Control[] { title, label, devices, bluetooth, imageLabel, picker, keyLabel, capture, suggested, help, feedback, clear, noKey, cancel, save });
             LoadChoices();
             app.Updated += OnDevicesUpdated;
@@ -253,9 +258,9 @@ namespace AudioFinder
                 if (capture.Error.Length > 0) { feedback.Text = capture.Error; return; }
                 app.Refresh();
                 var choice = devices.SelectedItem as DeviceChoice;
-                if (choice == null) { feedback.Text = "Selecione uma saída de áudio."; return; }
-                if (!choice.Saved && !app.Devices.Any(d => d.Id == choice.Endpoint.Id && d.Active)) { feedback.Text = "Conecte o dispositivo antes de cadastrá-lo pela primeira vez."; return; }
-                if (capture.Key != 0 && next.Slots.Where((s, i) => i != index).Any(s => s.Key == capture.Key && s.Modifiers == capture.Mods)) { feedback.Text = "Esse atalho já está cadastrado em outra posição."; return; }
+                if (choice == null) { feedback.Text = L.T("Selecione uma saída de áudio.", "Select an audio output."); return; }
+                if (!choice.Saved && !app.Devices.Any(d => d.Id == choice.Endpoint.Id && d.Active)) { feedback.Text = L.T("Conecte o dispositivo antes de cadastrá-lo pela primeira vez.", "Connect the device before setting it up for the first time."); return; }
+                if (capture.Key != 0 && next.Slots.Where((s, i) => i != index).Any(s => s.Key == capture.Key && s.Modifiers == capture.Mods)) { feedback.Text = L.T("Esse atalho já está cadastrado em outra posição.", "That shortcut is already used by another position."); return; }
                 slot.DeviceId = choice.Endpoint.Id; slot.Key = capture.Key; slot.Modifiers = capture.Mods;
                 var saved = next.Devices.FirstOrDefault(d => d.Id == slot.DeviceId);
                 if (saved == null) { saved = new SavedDevice { Id = slot.DeviceId }; next.Devices.Add(saved); }
@@ -305,11 +310,11 @@ namespace AudioFinder
         }
         private void ChooseImage()
         {
-            using (var dialog = new OpenFileDialog { Filter = "Imagem PNG|*.png" })
+            using (var dialog = new OpenFileDialog { Filter = L.T("Imagem PNG|*.png", "PNG image|*.png") })
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 try { picker.SetCustom(DeviceVisuals.Import(dialog.FileName)); }
-                catch (Exception ex) { feedback.Text = "Não foi possível importar: " + ex.Message; }
+                catch (Exception ex) { feedback.Text = L.T("Não foi possível importar: ", "Could not import: ") + ex.Message; }
             }
         }
         internal string Status { get { return status; } }
@@ -319,22 +324,22 @@ namespace AudioFinder
     {
         internal HistoryForm(TrayApp app)
         {
-            Ui.Init(this, "Histórico Bluetooth · Audio Finder", 620, 420); FormBorderStyle = FormBorderStyle.FixedDialog; MinimizeBox = false; StartPosition = FormStartPosition.CenterParent;
-            var title = Ui.Label("Seus fones ficam lembrados", 18, false); title.SetBounds(26, 20, 564, 35);
-            var help = Ui.Label("Selecione os fones que deseja esquecer. Seus atalhos serão liberados.\nIsso limpa apenas o Audio Finder; não desfaz o pareamento do Windows.", 9, true); help.SetBounds(28, 66, 564, 50);
-            var list = new CheckedListBox { CheckOnClick = true, BorderStyle = BorderStyle.None, IntegralHeight = false, AccessibleName = "Fones Bluetooth salvos" }; list.SetBounds(28, 132, 564, 176);
+            Ui.Init(this, L.T("Histórico Bluetooth · Audio Finder", "Bluetooth history · Audio Finder"), 620, 420); FormBorderStyle = FormBorderStyle.FixedDialog; MinimizeBox = false; StartPosition = FormStartPosition.CenterParent;
+            var title = Ui.Label(L.T("Seus fones ficam lembrados", "Your headsets are remembered"), 18, false); title.SetBounds(26, 20, 564, 35);
+            var help = Ui.Label(L.T("Selecione os fones que deseja esquecer. Seus atalhos serão liberados.\nIsso limpa apenas o Audio Finder; não desfaz o pareamento do Windows.", "Select the headsets you want to forget. Their shortcuts will be freed.\nThis only clears Audio Finder; it does not undo the Windows pairing."), 9, true); help.SetBounds(28, 66, 564, 50);
+            var list = new CheckedListBox { CheckOnClick = true, BorderStyle = BorderStyle.None, IntegralHeight = false, AccessibleName = L.T("Fones Bluetooth salvos", "Saved Bluetooth headsets") }; list.SetBounds(28, 132, 564, 176);
             var saved = app.Config.Devices.Where(d => d.Bluetooth).ToList();
-            foreach (var device in saved) list.Items.Add(device.Name + (app.Devices.Any(d => d.Id == device.Id && d.Active) ? " · conectado" : " · desconectado"));
-            var empty = Ui.Label(saved.Count == 0 ? "Nenhum fone Bluetooth cadastrado." : "O histórico só é apagado quando você pede.", 9, true); empty.SetBounds(28, 312, 564, 28);
-            var all = Ui.Button("Marcar todos", delegate { for (int i = 0; i < list.Items.Count; i++) list.SetItemChecked(i, true); }); all.SetBounds(26, 359, 144, 40);
-            var remove = Ui.Button("Esquecer selecionados", delegate
+            foreach (var device in saved) list.Items.Add(device.Name + (app.Devices.Any(d => d.Id == device.Id && d.Active) ? L.T(" · conectado", " · connected") : L.T(" · desconectado", " · disconnected")));
+            var empty = Ui.Label(saved.Count == 0 ? L.T("Nenhum fone Bluetooth cadastrado.", "No Bluetooth headset saved.") : L.T("O histórico só é apagado quando você pede.", "History is only cleared when you ask."), 9, true); empty.SetBounds(28, 312, 564, 28);
+            var all = Ui.Button(L.T("Marcar todos", "Select all"), delegate { for (int i = 0; i < list.Items.Count; i++) list.SetItemChecked(i, true); }); all.SetBounds(26, 359, 144, 40);
+            var remove = Ui.Button(L.T("Esquecer selecionados", "Forget selected"), delegate
             {
                 var selected = list.CheckedIndices.Cast<int>().Select(i => saved[i]).ToList(); if (selected.Count == 0) return;
-                if (MessageBox.Show(this, "Esquecer os fones e liberar suas posições e atalhos?\n\n" + String.Join("\n", selected.Select(d => d.Name)), "Limpar histórico Bluetooth", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                if (MessageBox.Show(this, L.T("Esquecer os fones e liberar suas posições e atalhos?", "Forget these headsets and free their positions and shortcuts?") + "\n\n" + String.Join("\n", selected.Select(d => d.Name)), L.T("Limpar histórico Bluetooth", "Clear Bluetooth history"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
                 var next = app.Config.Copy(); next.Forget(selected.Select(d => d.Id)); string error;
-                if (app.Apply(next, out error)) Close(); else MessageBox.Show(this, error, "Não foi possível salvar");
+                if (app.Apply(next, out error)) Close(); else MessageBox.Show(this, error, L.T("Não foi possível salvar", "Could not save"));
             }); remove.SetBounds(184, 359, 239, 40);
-            var close = Ui.Button("Fechar", delegate { Close(); }); close.SetBounds(443, 359, 149, 40);
+            var close = Ui.Button(L.T("Fechar", "Close"), delegate { Close(); }); close.SetBounds(443, 359, 149, 40);
             Controls.AddRange(new Control[] { title, help, list, empty, all, remove, close }); Ui.Theme(this, app.Config.Theme);
             list.BackColor = new Palette(app.Config.Theme).Inset; list.ForeColor = ForeColor; Shown += delegate { PaintUi.TitleBar(this, new Palette(app.Config.Theme)); };
             Ui.Ready(this);
@@ -378,37 +383,38 @@ namespace AudioFinder
                     if (slot == null || String.IsNullOrWhiteSpace(slot.DeviceId)) continue;
                     var current = enumerated.FirstOrDefault(d => String.Equals(d.Id, slot.DeviceId, StringComparison.OrdinalIgnoreCase));
                     var saved = settings.Devices.FirstOrDefault(d => String.Equals(d.Id, slot.DeviceId, StringComparison.OrdinalIgnoreCase));
-                    string name = current != null && !String.IsNullOrWhiteSpace(current.Name) ? current.Name : saved != null && !String.IsNullOrWhiteSpace(saved.Name) ? saved.Name : "Saída de áudio";
+                    string name = current != null && !String.IsNullOrWhiteSpace(current.Name) ? current.Name : saved != null && !String.IsNullOrWhiteSpace(saved.Name) ? saved.Name : L.T("Saída de áudio", "Audio output");
                     configured.Add(new ConfiguredOutput { Position = index + 1, DeviceId = slot.DeviceId, Name = name, Active = current != null && current.Active, IconPreset = saved == null ? "generic" : saved.IconPreset, IconPath = saved == null ? "" : saved.IconPath });
                 }
             }
             int selectedPosition = selectedIndex + 1;
             var selected = configured.FirstOrDefault(d => d.Position == selectedPosition);
-            return new OutputToast("Saída selecionada", selected == null ? "Saída de áudio" : selected.Name, selectedPosition, configured, theme);
+            return new OutputToast(L.T("Saída selecionada", "Output selected"), selected == null ? L.T("Saída de áudio", "Audio output") : selected.Name, selectedPosition, configured, theme);
         }
         internal static OutputToast Failure(string text, Appearance theme)
-        { return new OutputToast("Saída indisponível", text, 0, Enumerable.Empty<ConfiguredOutput>(), theme); }
+        { return new OutputToast(Unavailable, text, 0, Enumerable.Empty<ConfiguredOutput>(), theme); }
+        private static string Unavailable { get { return L.T("Saída indisponível", "Output unavailable"); } }
         private static ConfiguredOutput SlotOutput(int index, Settings settings)
         {
             var slot = settings != null && index >= 0 && index < settings.Slots.Count ? settings.Slots[index] : null;
             var saved = slot == null ? null : settings.Devices.FirstOrDefault(d => d.Id == slot.DeviceId);
-            return new ConfiguredOutput { Position = index + 1, DeviceId = slot == null ? "" : slot.DeviceId, Name = saved == null ? "Dispositivo " + (index + 1) : saved.Name, IconPreset = saved == null ? "generic" : saved.IconPreset, IconPath = saved == null ? "" : saved.IconPath };
+            return new ConfiguredOutput { Position = index + 1, DeviceId = slot == null ? "" : slot.DeviceId, Name = saved == null ? L.F("Dispositivo {0}", "Device {0}", index + 1) : saved.Name, IconPreset = saved == null ? "generic" : saved.IconPreset, IconPath = saved == null ? "" : saved.IconPath };
         }
         internal static OutputToast Connecting(int selectedIndex, Settings settings, Appearance theme)
         {
             var output = SlotOutput(selectedIndex, settings);
-            return new OutputToast("Conectando…", output.Name, selectedIndex + 1, new[] { output }, theme, true, true);
+            return new OutputToast(L.T("Conectando…", "Connecting…"), output.Name, selectedIndex + 1, new[] { output }, theme, true, true);
         }
         internal static OutputToast DeviceFailure(int selectedIndex, Settings settings, string text, Appearance theme)
         {
             var output = SlotOutput(selectedIndex, settings);
-            var toast = new OutputToast("Saída indisponível", output.Name, selectedIndex + 1, new[] { output }, theme, false, true);
+            var toast = new OutputToast(Unavailable, output.Name, selectedIndex + 1, new[] { output }, theme, false, true);
             toast.AccessibleDescription = text; return toast;
         }
         internal static OutputToast Connected(int selectedIndex, Settings settings, Appearance theme)
         {
             var output = SlotOutput(selectedIndex, settings);
-            return new OutputToast("Conectado", output.Name, selectedIndex + 1, new[] { output }, theme, false, true, true);
+            return new OutputToast(L.T("Conectado", "Connected"), output.Name, selectedIndex + 1, new[] { output }, theme, false, true, true);
         }
         private OutputToast(string heading, string text, int selectedPosition, IEnumerable<ConfiguredOutput> outputs, Appearance theme, bool connecting = false, bool connectionView = false, bool connected = false)
         {
@@ -423,9 +429,9 @@ namespace AudioFinder
             int width = showList ? Math.Max(360, configured.Count * 116 + 64) : 440;
             Ui.Init(this, "Audio Finder · " + heading.ToLowerInvariant(), width, connectionView ? 224 : showList ? 244 : 134); FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; TopMost = true; StartPosition = FormStartPosition.Manual;
             var panel = new GlassPanel { Dock = DockStyle.Fill, Size = ClientSize };
-            var title = Ui.Label(connectionView && !connecting && !connected ? "Sem conexão" : heading, 12, false); title.SetBounds(18, 12, connecting ? width - 150 : width - 36, 25);
+            var title = Ui.Label(connectionView && !connecting && !connected ? L.T("Sem conexão", "Not connected") : heading, 12, false); title.SetBounds(18, 12, connecting ? width - 150 : width - 36, 25);
             var body = Ui.Label(connectionView ? selectedPosition + " · " + text : text, 9, !showList); body.SetBounds(18, 39, width - 36, showList || connectionView ? 24 : 67);
-            body.AccessibleName = connectionView ? "Posição " + selectedPosition + ": " + text : text;
+            body.AccessibleName = connectionView ? L.F("Posição {0}: {1}", "Position {0}: {1}", selectedPosition, text) : text;
             title.Anchor = body.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             panel.Controls.AddRange(new Control[] { title, body });
             if (showList) panel.Controls.Add(new OutputBar(configured, SelectedPosition) { Dock = DockStyle.Bottom, Height = 175 });
@@ -434,7 +440,7 @@ namespace AudioFinder
                 connectionVisual = new ConnectionVisual(selected ?? SlotOutput(selectedPosition - 1, null), connecting, connected); connectionVisual.SetBounds(12, 70, width - 24, 140); connectionVisual.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; panel.Controls.Add(connectionVisual);
                 if (connecting)
                 {
-                    var cancel = Ui.Button("Cancelar", delegate { var handler = CancelRequested; if (handler != null) handler(); else Close(); }); cancel.SetBounds(width - 119, 11, 100, 31); cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right; cancel.AccessibleName = "Cancelar tentativa de conexão"; panel.Controls.Add(cancel);
+                    var cancel = Ui.Button(L.T("Cancelar", "Cancel"), delegate { var handler = CancelRequested; if (handler != null) handler(); else Close(); }); cancel.SetBounds(width - 119, 11, 100, 31); cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right; cancel.AccessibleName = L.T("Cancelar tentativa de conexão", "Cancel connection attempt"); panel.Controls.Add(cancel);
                 }
             }
             Controls.Add(panel); Ui.Theme(this, theme);

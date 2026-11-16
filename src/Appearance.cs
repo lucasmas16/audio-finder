@@ -204,10 +204,13 @@ namespace AudioFinder
         }
     }
 
-    internal sealed class ThemeToggle : Toggle
+    // Two-option segmented switch: unchecked selects the left option, checked the right one.
+    internal class SegmentToggle : Toggle
     {
         private bool? clickedSide;
-        internal ThemeToggle() { AutoCheck = false; Size = new Size(156, 38); AccessibleName = "Tema escuro"; AccessibleDescription = "Ativado: dark. Desativado: light. Espaço alterna o tema."; }
+        protected readonly string[] Labels = { "", "" };
+        protected readonly string[] Glyphs = { null, null };
+        internal SegmentToggle() { AutoCheck = false; }
         protected override void OnMouseDown(MouseEventArgs e) { if (e.Button == MouseButtons.Left) clickedSide = e.X >= Width / 2; base.OnMouseDown(e); }
         protected override void OnMouseLeave(EventArgs e) { clickedSide = null; base.OnMouseLeave(e); }
         protected override void OnKeyDown(KeyEventArgs e) { clickedSide = null; base.OnKeyDown(e); }
@@ -222,11 +225,35 @@ namespace AudioFinder
             for (int i = 0; i < 2; ++i)
             {
                 Color fg = (Checked == (i == 1)) ? palette.Text : palette.Muted;
-                float x = i * half + 12 * s;
-                PaintUi.Glyph(e.Graphics, i == 0 ? "sun" : "moon", new RectangleF(x, (Height - 19 * s) / 2, 16 * s, 16 * s), fg, 1.6f);
-                PaintUi.Text(e.Graphics, i == 0 ? "Light" : "Dark", Font, fg, new Rectangle((int)(x + 21 * s), 0, (int)(half - 29 * s), Height - (int)(3 * s)), TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+                float left = i * half + 5 * s;
+                if (Glyphs[i] == null)
+                    PaintUi.Text(e.Graphics, Labels[i], Font, fg, new Rectangle((int)left, 0, (int)half, Height - (int)(3 * s)), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+                else
+                {
+                    float x = i * half + 12 * s;
+                    PaintUi.Glyph(e.Graphics, Glyphs[i], new RectangleF(x, (Height - 19 * s) / 2, 16 * s, 16 * s), fg, 1.6f);
+                    PaintUi.Text(e.Graphics, Labels[i], Font, fg, new Rectangle((int)(x + 21 * s), 0, (int)(half - 29 * s), Height - (int)(3 * s)), TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+                }
             }
             if (Focused && ShowFocusCues) ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(ClientRectangle, -5, -5), palette.Accent, palette.Inset);
+        }
+    }
+
+    internal sealed class ThemeToggle : SegmentToggle
+    {
+        internal ThemeToggle()
+        {
+            Size = new Size(172, 38); Glyphs[0] = "sun"; Glyphs[1] = "moon"; Labels[0] = L.T("Claro", "Light"); Labels[1] = L.T("Escuro", "Dark");
+            AccessibleName = L.T("Tema escuro", "Dark theme"); AccessibleDescription = L.T("Ativado: escuro. Desativado: claro. Espaço alterna o tema.", "On: dark. Off: light. Space switches the theme.");
+        }
+    }
+
+    internal sealed class LanguageToggle : SegmentToggle
+    {
+        internal LanguageToggle()
+        {
+            Size = new Size(112, 38); Labels[0] = "PT"; Labels[1] = "EN";
+            AccessibleName = "Idioma / Language"; AccessibleDescription = L.T("Ativado: inglês. Desativado: português. Espaço alterna o idioma.", "On: English. Off: Portuguese. Space switches the language.");
         }
     }
 

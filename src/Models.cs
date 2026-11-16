@@ -34,6 +34,7 @@ namespace AudioFinder
     public class Settings
     {
         public Appearance Theme = Appearance.Dark;
+        public Language Language = Language.Auto;
         public bool ShowErrors = true;
         public bool Enabled = true;
         public List<SavedDevice> Devices = new List<SavedDevice>();
@@ -53,6 +54,7 @@ namespace AudioFinder
         public void Normalize()
         {
             if (!Enum.IsDefined(typeof(Appearance), Theme)) Theme = Appearance.Dark;
+            if (!Enum.IsDefined(typeof(Language), Language)) Language = Language.Auto;
             Devices = (Devices ?? new List<SavedDevice>()).Where(d => d != null && !String.IsNullOrWhiteSpace(d.Id)).GroupBy(d => d.Id, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
             Slots = (Slots ?? new List<Slot>()).Take(8).Select(s => s ?? new Slot()).ToList();
             while (Slots.Count < 8) Slots.Add(new Slot());
@@ -109,7 +111,7 @@ namespace AudioFinder
         }
         internal static string Format(uint key, uint mods)
         {
-            if (key == 0) return "Sem atalho";
+            if (key == 0) return L.T("Sem atalho", "No shortcut");
             string text = ((mods & 2) != 0 ? "Ctrl + " : "") + ((mods & 1) != 0 ? "Alt + " : "") + ((mods & 4) != 0 ? "Shift + " : "");
             string name = ((Keys)key).ToString();
             if (key >= 48 && key <= 57) name = ((char)key).ToString();
@@ -128,8 +130,8 @@ namespace AudioFinder
             catch (Exception ex)
             {
                 if (!(ex is IOException || ex is InvalidOperationException || ex is UnauthorizedAccessException)) throw;
-                Warning = "Não foi possível ler as configurações. O arquivo original foi preservado.";
-                try { var backup = Read(FilePath + ".bak"); Warning = "As configurações foram recuperadas da cópia de segurança."; return backup; }
+                Warning = L.T("Não foi possível ler as configurações. O arquivo original foi preservado.", "The settings could not be read. The original file was preserved.");
+                try { var backup = Read(FilePath + ".bak"); Warning = L.T("As configurações foram recuperadas da cópia de segurança.", "The settings were restored from the backup copy."); return backup; }
                 catch (Exception backupError) { if (!(backupError is IOException || backupError is InvalidOperationException || backupError is UnauthorizedAccessException)) throw; return new Settings(); }
             }
         }
