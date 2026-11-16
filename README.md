@@ -84,6 +84,17 @@ A conexão usa a propriedade pública [KSPROPERTY_ONESHOT_RECONNECT](https://lea
 - Separar testes de lógica dos testes que interagem com hardware.
 - Avaliar versões futuras do .NET somente com medição de compatibilidade e consumo.
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org). *(Pedido em análise; até a aprovação, as releases saem sem assinatura.)*
+
+- Committers and reviewers: [@lucasmas16](https://github.com/lucasmas16)
+- Approvers: [@lucasmas16](https://github.com/lucasmas16)
+
+Somente binários gerados pela pipeline [release](.github/workflows/release.yml) a partir deste repositório são assinados, e cada assinatura exige aprovação manual. Detalhes em [assinatura de código](docs/ASSINATURA.md).
+
+Privacy policy: this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+
 ## Licença
 
 [MIT](LICENSE). Os ícones de `assets/devices` são ilustrações genéricas de categorias de dispositivos, sem vínculo com fabricantes.
