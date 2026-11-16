@@ -1,0 +1,11 @@
+* text=auto
+*.md text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+# Hash-pinned in tools/privacy-reviewed.json: identical bytes on every checkout.
+installer/Setup.cs text eol=lf
+*.png binary
+*.ico binary
+*.jar binary
+*.tgz binary

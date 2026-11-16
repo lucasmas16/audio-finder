@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only token by default; no job here needs to write to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verificação de privacidade
+        run: node tools/check-privacy.cjs
+
+      - name: Compilar aplicativo e pacotes
+        shell: pwsh
+        run: ./build.ps1 -Release
+
+      # The full UI suite needs real audio endpoints and an interactive desktop; it stays local.
+      - name: Testes determinísticos
+        shell: pwsh
+        run: |
+          ./tests/device-identity.ps1
+          ./tests/bluetooth-connection.ps1
+
+      - name: Teste do instalador
+        shell: pwsh
+        run: ./tests/installer-smoke.ps1 -Integration
+
+      - name: Publicar pacotes do build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: audio-finder-${{ github.sha }}
+          path: release/
+          retention-days: 7
+          if-no-files-found: error

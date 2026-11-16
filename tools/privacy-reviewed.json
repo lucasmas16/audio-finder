@@ -1,0 +1,60 @@
+{
+  "description": "Exceções revisadas por conteúdo exato. Revisar novamente após qualquer alteração.",
+  "files": {
+    "installer/Setup.cs": {
+      "sha256": "9d84dcbfebaa48841e350a62796520096ed4850a39ae5f221baa324eff56aadb",
+      "reason": "Linhas 400-401: CLSID ShellLink e IID IShellLinkW, identificadores COM públicos do Windows; não são dados pessoais.",
+      "rules": ["longIdentifier"]
+    },
+    "AudioFinder.ico": {
+      "sha256": "cb4048b731b10bc1a3c95fd2c49c9115880d82f8225840524e27fc0565f6238b",
+      "reason": "Recurso visual de aplicativo revisado",
+      "binary": true
+    },
+    "assets/devices/airpods-pro.png": {
+      "sha256": "8859f22999690e5862e43fc367d2bfb34aefec0bf0f777dcd97e4a0ba3f8c87d",
+      "reason": "Ícone de dispositivo gerado e inspecionado visualmente; sem dados pessoais ou texto, PNG transparente.",
+      "binary": true
+    },
+    "assets/devices/edifier-monitors.png": {
+      "sha256": "6e6a45340f0be95ac5300c72670a3300dd74098cde0a8510502ce1c5ea6897ad",
+      "reason": "Ícone de dispositivo gerado e inspecionado visualmente; sem dados pessoais ou texto, PNG transparente.",
+      "binary": true
+    },
+    "assets/devices/edifier-w820nb.png": {
+      "sha256": "b2d8d17822f04c80617257436e96bbd00241bcd5e59532ff599558d18f1d4355",
+      "reason": "Ícone de dispositivo gerado e inspecionado visualmente; sem dados pessoais ou texto, PNG transparente.",
+      "binary": true
+    },
+    "assets/devices/sony-pulse.png": {
+      "sha256": "9b64d6fab86db2d3d159d6031475c36e059086adff07b9364f170001750616e5",
+      "reason": "Ícone de dispositivo gerado e inspecionado visualmente; sem dados pessoais ou texto, PNG transparente.",
+      "binary": true
+    },
+    "assets/devices/monitor-tv.png": {
+      "sha256": "dd08199d9a32be0ddd9a34d0ce26b3e4606668b6fe98e6cebd79aa5389594986",
+      "reason": "Ícone de dispositivo gerado e inspecionado visualmente a 36/96px; transparência confirmada, sem dados pessoais ou texto.",
+      "binary": true
+    },
+    "assets/devices/kuba-disco.png": {
+      "sha256": "2c3ef6683732ecb9ad26c43c6c287da1030e80d6402decf768adcb7f329e6e8a",
+      "reason": "Ícone corrigido e inspecionado visualmente em imagem grande e 36/96px; transparência confirmada, sem dados pessoais ou texto.",
+      "binary": true
+    },
+    "assets/devices/airpods.png": {
+      "sha256": "d203f20cbfae1a501c1e5d912ef585e0e5cea7e464f8410e82d46ae75e9b53d6",
+      "reason": "Ícone corrigido e inspecionado visualmente em imagem grande e 36/96px; transparência confirmada, sem dados pessoais ou texto.",
+      "binary": true
+    },
+    "assets/devices/kz-az09pro.png": {
+      "sha256": "14b88fdf4d4141763178e4771deb469ef9142bfdbc2e9dbe1553e25fae3cb414",
+      "reason": "Generated device icon visually reviewed at 36/96px on dark and light backgrounds; transparent PNG without text or personal data.",
+      "binary": true
+    },
+    "assets/devices/shokz-openrun-pro-2.png": {
+      "sha256": "22119111c1f2c16c1cd6b22339b8bab35e7312023775d87bcc9fa3cbca47f0f4",
+      "reason": "Generated device icon visually reviewed at 36/96px on dark and light backgrounds; transparent PNG without text or personal data.",
+      "binary": true
+    }
+  }
+}
